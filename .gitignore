@@ -17,7 +17,6 @@ venv/
 .agent-forge/sessions/
 .agent-forge/cache/
 results/
-improve/
 *.rubric.md
 *.tsv
 
