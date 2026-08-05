@@ -51,16 +51,17 @@ nucleus не переделывает чужие скилы. Когда чело
 
 ## 2. Run-through для «хочу создать X»
 
-1. Если нет `.agents/` конфига репозитория — один раз `/setup-matt-pocock-skills`
-   (issue-tracker, triage labels, место доков). Это upstream setup-скил MC.
-2. **`/grilling`** (mattpocock) — дизайновское дерево интервью: раунды с
+1. Если нет конфига репозитория — один раз `/setup-matt-pocock-skills`
+   (issue-tracker, triage labels, место доков). Это upstream setup-скил
+   mattpocock.
+2. **`/grilling`** (mattpocock) — дизайн-дерево интервью: раунды с
    фронтиром, рекомендованные ответы, факты ищет агент (сабагент-`/research`),
-   решения — человек. البس с парами ``/domain-modeling`` чтобы писать
-   `CONTEXT.md` (упиквитous language) и ADR в момент.
+   решения — человек. Параллельно с `/domain-modeling` пиши `CONTEXT.md`
+   (ubiquitous language) и ADR в момент кристаллизации.
 3. Если проект **больше одной сессии/туманно** → `/wayfinder` (карта
-   decision-тикетов, frontier, HITL/AFK). Если влезает в сессию — доходи.
+   decision-тикетов, frontier, HITL/AFK). Если влезает в сессию — шли дальше.
 4. **`/to-spec`** — свернуть разговор в построимую спецификацию на трекере.
-5. **`/to-tickets`** — распилить на tracer-bullet тикеты с блокирование
+5. **`/to-tickets`** — распилить на tracer-bullet тикеты с блокирующими
    рёбрами.
 6. **`/implement`** по каждому тикету (с `/clear` между ними); внутри
    гонит **`/tdd`** (red→green, seams, vertical slices), замыкает
@@ -82,7 +83,7 @@ nucleus не переделывает чужие скилы. Когда чело
 
 ## 4. Рабочие правила
 
-1. **Вызывай скил по его настоящему `/name`** из frontmatter. Не коняй его
+1. **Вызывай скил по его настоящему `/name`** из frontmatter. Не подменяй его
    собственной версией — в nucleus их нет.
 2. **Оригинал SKILL.md — источник правды.** Перед тем как применить — прочитай
    `skills/<vendor>/<name>/SKILL.md` дословно.
