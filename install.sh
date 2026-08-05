@@ -15,8 +15,17 @@
 #   bash install.sh --harness opencode,claude-code --vendors mattpocock,auto-improve
 set -euo pipefail
 
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
 SKILLS_DIR="$HERE/skills"
+# Running via `bash <(curl ...)` (process-substitution) → BASH_SOURCE[0] is
+# /dev/fd/NN and no skills/ sits beside it. Fall back to a temp clone, mirroring
+# install.ps1. Same fallback covers the case install.sh was downloaded alone.
+if [[ ! -d "$SKILLS_DIR" ]]; then
+  _tmp="$(mktemp -d)"
+  git clone --depth 1 https://github.com/CaptchaQ/nucleus "$_tmp" >/dev/null 2>&1 \
+    || { echo "error: skills/ not local and git clone failed" >&2; exit 1; }
+  HERE="$_tmp"; SKILLS_DIR="$HERE/skills"
+fi
 
 usage() {
   echo "Usage: bash install.sh [--harness opencode,claude-code,codex,omp,all] [--vendors mattpocock,auto-improve,ecc,emilkowalski,stitch-skills,all]"
@@ -36,7 +45,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ -d "$SKILLS_DIR" ]] || { echo "error: skills/ not found next to install.sh ($SKILLS_DIR)" >&2; exit 1; }
 
 csv_to_arr() { local s="$1" IFS=','; [[ "$s" == "all" ]] && { echo all; return; }; for x in $s; do echo "$x"; done; }
 mapfile -t V_ARR < <(csv_to_arr "$VENDORS")
