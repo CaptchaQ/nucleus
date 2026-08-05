@@ -108,9 +108,11 @@ skills/
 ├── emilkowalski/<name>/SKILL.md ← review-animations, improve-animations, animate, ...
 ├── stitch-skills/              ← google-labs-code/stitch-skills ( смотри NOTE.md внутри)
 ```
-Каждый `skills/<vendor>/ATTRIBUTION.md` — upstream URL + commit SHA + дата
+Эти скилы лежат **прямо в папке проекта** (`skills/<vendor>/<name>/SKILL.md`)
+— именно по этому пути читай оригинал скила дословно (правило 2). Каждый
+`skills/<vendor>/ATTRIBUTION.md` — upstream URL + commit SHA + дата
 клонирования. Каждый `skills/<vendor>/LICENSE` — копия upstream-лицензии.
- Все скилы в их оригинальном виде; nucleus не редактировал их содержимое.
+Все скилы в их оригинальном виде; nucleus не редактировал их содержимое.
 
 ## 6. Источники механик
 
@@ -126,15 +128,26 @@ UX/motion review, frequency-gate, strict output, audit-then-plan —
 UX-эвристики — [keepsimple.io/ru/uxcore](https://keepsimple.io/ru/uxcore).
 Библиотека промптов/параметризация — [f/prompts.chat](https://github.com/f/prompts.chat).
 
-## 7. Установка в проект
+## 7. Установка в проект (одна команда)
 
-```bash
-bash install.sh --harness opencode,claude-code,codex,omp
-# или Windows
-.\\install.ps1 -Harness opencode,claude-code,codex,omp
+В папке нового проекта:
+
+```powershell
+# Windows PowerShell
+irm https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.ps1 | iex
 ```
-Копирует все vendored скилы в каталоги скилов харнессов и кладёт этот
-AGENTS.md в текущую папку. См. `install.sh --help`.
+```bash
+# POSIX (bash)
+bash <(curl -fsSL https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.sh)
+```
+
+По умолчанию (без флагов) кладёт `AGENTS.md` + всё дерево `skills/` (53 upstream
+скила) **прямо в текущую папку** — проект self-contained. Откройте папку в
+агенте и скажите «хочу создать …, сначала интервью /grilling».
+
+Опционально `--harness`/`-Harness` чтобы дополнительно установить скилы в
+глобальные каталоги харнесса (тогда `/name` работает через harness-discovery и
+вне этой папки). См. `install.sh --help`.
 
 ## 8. Формат ответов
 

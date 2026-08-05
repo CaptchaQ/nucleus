@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
-# nucleus — thin orchestrator installer.
-# Copies vendored upstream skills (skills/<vendor>/<name>/...) into agent
-# harness skill directories, and drops AGENTS.md into cwd.
+# nucleus — one-command installer for a project folder.
+#
+# Default (no flags): copy AGENTS.md + the entire skills/ tree (all vendors,
+# all 53 upstream skills) INTO THE CURRENT FOLDER. Self-contained — the agent
+# reads skills/<vendor>/<name>/SKILL.md right from the project. No harness
+# config, no global install, no path resolution surprises.
+#
+# Optional --harness: ALSO copy into the named harness skill dirs so /name
+# works via the harness skill discovery (in addition to the project copy).
+#
 # Usage:
-#   bash install.sh [--harness opencode,claude-code,codex,omp,all] [--vendors mattpocock,auto-improve,ecc,emilkowalski,stitch-skills,all]
+#   bash <(curl -fsSL .../install.sh)            # project-local only (default)
+#   bash install.sh --harness opencode          # project-local + opencode global
+#   bash install.sh --harness opencode,claude-code --vendors mattpocock,auto-improve
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,13 +20,13 @@ SKILLS_DIR="$HERE/skills"
 
 usage() {
   echo "Usage: bash install.sh [--harness opencode,claude-code,codex,omp,all] [--vendors mattpocock,auto-improve,ecc,emilkowalski,stitch-skills,all]"
-  echo "Copies vendored upstream skills into harness skill dirs and AGENTS.md into cwd."
-  echo "Vendored skills are real upstream files (mattpocock/skills, ECC, auto-improve,"
-  echo "emilkowalski/skills, stitch-skills). nucleus is a thin orchestrator."
+  echo "Default: copies AGENTS.md + all skills/ into the current folder (self-contained project)."
+  echo "--harness: ALSO installs into those harness skill dirs (so /name works globally too)."
+  echo "--vendors: comma list of vendors to include (default all)."
   exit 1
 }
 
-HARNESSES=all; VENDORS=all
+HARNESSES=""; VENDORS="all"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --harness) shift; HARNESSES="$1"; shift ;;
@@ -27,79 +36,65 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-csv_to_arr() {  # echoes items one per line
-  local s="$1" IFS=','
-  [[ "$s" == "all" ]] && { echo all; return; }
-  for x in $s; do echo "$x"; done
-}
+[[ -d "$SKILLS_DIR" ]] || { echo "error: skills/ not found next to install.sh ($SKILLS_DIR)" >&2; exit 1; }
 
-mapfile -t H_ARR < <(csv_to_arr "$HARNESSES")
-[[ "${H_ARR[0]}" == "all" ]] && H_ARR=(opencode claude-code codex omp)
+csv_to_arr() { local s="$1" IFS=','; [[ "$s" == "all" ]] && { echo all; return; }; for x in $s; do echo "$x"; done; }
 mapfile -t V_ARR < <(csv_to_arr "$VENDORS")
 [[ "${V_ARR[0]}" == "all" ]] && V_ARR=(mattpocock auto-improve ecc emilkowalski stitch-skills)
 
-[[ -d "$SKILLS_DIR" ]] || { echo "error: skills/ not found next to install.sh" >&2; exit 1; }
-
-declare -A DIRS=(
-  [opencode]=".config/opencode/skills"
-  [claude-code]=".claude/skills"
-  [codex]=".codex/skills"
-  [omp]=".agents/skills"
-)
-
-# install one vendor folder into a harness dest
-install_vendor() {  # dest vendor_dir
-  local dest="$1" vdir="$2"
-  local vname; vname="$(basename "$vdir")"
-  # copy every skill subdir (those that contain SKILL.md somewhere) flat into dest/<name>/
-  if [[ "$vname" == "auto-improve" ]]; then
-    # auto-improve is a single skill folder with SKILL.md + improve.py + criteria/
-    rm -rf "$dest/auto-improve"
-    cp -r "$vdir" "$dest/auto-improve"
-    return
-  fi
-  # vendor/<name>/SKILL.md (flattened) → dest/<name>/
-  for skill in "$vdir"/*/; do
-    name="$(basename "$skill")"
-    case "$name" in LICENSE|ATTRIBUTION.md|NOTE.md|UPSTREAM-AGENTS.md) continue ;; esac
-    [[ -f "$skill/SKILL.md" ]] || continue
-    # avoid clobbering an earlier vendor's same-named skill: first wins
-    if [[ -d "$dest/$name" ]]; then
-      echo "  skip $name (already present, $vname)" >&2
-      continue
-    fi
-    cp -r "$skill" "$dest/$name"
-  done
-}
-
-installed=0
-for h in "${H_ARR[@]}"; do
-  rel="${DIRS[$h]:-}"
-  [[ -z "$rel" ]] && { echo "warning: unknown harness '$h'" >&2; continue; }
-  dest="$HOME/$rel"
-  mkdir -p "$dest"
-  for v in "${V_ARR[@]}"; do
-    vdir="$SKILLS_DIR/$v"
-    [[ -d "$vdir" ]] || { echo "warning: vendor '$v' not found in skills/" >&2; continue; }
-    install_vendor "$dest" "$vdir"
-  done
-  echo "✓ skills → $dest"
-  installed=$((installed + 1))
+# --- Step 1: project-local copy (always) ---
+echo "== project-local install → $PWD =="
+mkdir -p "$PWD/skills"
+for v in "${V_ARR[@]}"; do
+  vdir="$SKILLS_DIR/$v"
+  [[ -d "$vdir" ]] || { echo "warning: vendor '$v' not found" >&2; continue; }
+  rm -rf "$PWD/skills/$v"
+  cp -r "$vdir" "$PWD/skills/$v"
+  echo "  ✓ skills/$v"
 done
 
 if [[ -f "$HERE/AGENTS.md" ]]; then
   if [[ "$PWD" == "$HERE" ]]; then
-    :
-  elif [[ -f "$PWD/AGENTS.md" ]] && cmp -s "$HERE/AGENTS.md" "$PWD/AGENTS.md"; then
-    echo "✓ AGENTS.md already up to date"
+    echo "  ✓ AGENTS.md already here (running from repo)"
   else
     cp "$HERE/AGENTS.md" "$PWD/AGENTS.md"
-    echo "✓ AGENTS.md → $PWD/AGENTS.md"
+    echo "  ✓ AGENTS.md → $PWD/AGENTS.md"
   fi
 fi
 
-[[ $installed -eq 0 ]] && { echo "error: nothing installed" >&2; exit 1; }
+# --- Step 2 (optional): ALSO install into harness skill dirs ---
+if [[ -n "$HARNESSES" ]]; then
+  declare -A DIRS=(
+    [opencode]=".config/opencode/skills"
+    [claude-code]=".claude/skills"
+    [codex]=".codex/skills"
+    [omp]=".agents/skills"
+  )
+  mapfile -t H_ARR < <(csv_to_arr "$HARNESSES")
+  [[ "${H_ARR[0]}" == "all" ]] && H_ARR=(opencode claude-code codex omp)
+  for h in "${H_ARR[@]}"; do
+    rel="${DIRS[$h]:-}"
+    [[ -z "$rel" ]] && { echo "warning: unknown harness '$h'" >&2; continue; }
+    dest="$HOME/$rel"; mkdir -p "$dest"
+    for v in "${V_ARR[@]}"; do
+      vdir="$SKILLS_DIR/$v"
+      [[ -d "$vdir" ]] || continue
+      if [[ "$v" == "auto-improve" ]]; then
+        rm -rf "$dest/auto-improve"; cp -r "$vdir" "$dest/auto-improve"; continue
+      fi
+      for skill in "$vdir"/*/; do
+        name="$(basename "$skill")"
+        case "$name" in LICENSE|ATTRIBUTION.md|NOTE.md|UPSTREAM-AGENTS.md) continue ;; esac
+        [[ -f "$skill/SKILL.md" ]] || continue
+        [[ -d "$dest/$name" ]] && continue
+        cp -r "$skill" "$dest/$name"
+      done
+    done
+    echo "  ✓ also installed into $dest"
+  done
+fi
 
 echo
-echo "Done. nucleus is a thin orchestrator — start your agent and say:"
+echo "Done. Open this folder in your AI agent and say:"
 echo "  «хочу создать …, сначала интервью /grilling»"
+echo "(skills/ и AGENTS.md лежат прямо в папке проекта — агент найдёт их локально)"
