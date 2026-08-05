@@ -55,17 +55,40 @@ flowchart LR
   style E fill:#7c2d12,color:#fed7aa
 ```
 
-## Установка
+## Установка одной командой
 
 Требуется Node.js ≥ 18.17 и (для `improve`) Python 3.8+.
 
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/CaptchaQ/nucleus/main/scripts/install.ps1 | iex
+```
+
+**macOS / Linux / Git Bash:**
+
 ```bash
-# собрать ядро
+bash <(curl -fsSL https://raw.githubusercontent.com/CaptchaQ/nucleus/main/scripts/install.sh)
+```
+
+Установщик: клонирует репозиторий в `~/.nucleus`, собирает ядро, кладёт
+команду `nucleus` на PATH и **регистрирует скилл `nucleus-agent` в агентские
+харнессы** (`~/.claude/skills`, `~/.config/opencode/skill`, `~/.codex/skills`).
+После перезапуска сессии агента достаточно сказать ему:
+
+> «создай проект через nucleus»
+
+Агент сам проведёт допрос, соберёт скилы и построит оркестрацию.
+
+### Ручная установка
+
+```bash
+git clone https://github.com/CaptchaQ/nucleus.git && cd nucleus
 npm install
 npm run build            # → dist/cli/index.js
+npm link                 # → команда `nucleus` глобально
 
-# CLI доступен как:
-node dist/cli/index.js   # или, после `npm link`, просто `nucleus`
+nucleus install          # зарегистрировать скилл в харнессы (или `--harness opencode`)
 ```
 
 ## Использование
@@ -77,6 +100,7 @@ nucleus load [--install] # собрать бандл скилов (опц. ус�
 nucleus orchestrate      # построить DAG субагентов из загруженного бандла
 nucleus improve <file>   # GAN-цикл улучшения файла (Python bridge)
 nucleus skill add <name> # скаффолд кастомного скила в .agent-forge/skills/<name>/
+nucleus install          # зарегистрировать скилл агента в харнессы (claude-code/opencode/codex)
 nucleus catalog          # каталог скилов по всем 7 источникам
 nucleus doctor           # проверить окружение и артефакты
 ```

@@ -42,6 +42,8 @@
     "profiles",
     "catalog",
     "scripts/reindex.mjs",
+    "scripts/install.sh",
+    "scripts/install.ps1",
     "assets/nucleus-banner.svg",
     "README.md",
     "README.ru.md",

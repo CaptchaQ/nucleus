@@ -57,16 +57,41 @@ flowchart LR
   style E fill:#7c2d12,color:#fed7aa
 ```
 
-## Install
+## One-command install
 
 Requires Node.js ≥ 18.17 and (for `improve`) Python 3.8+.
 
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/CaptchaQ/nucleus/main/scripts/install.ps1 | iex
+```
+
+**macOS / Linux / Git Bash:**
+
 ```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/CaptchaQ/nucleus/main/scripts/install.sh)
+```
+
+The installer clones the repo to `~/.nucleus`, builds the core, puts `nucleus`
+on PATH, and **registers the `nucleus-agent` skill into agent harnesses**
+(`~/.claude/skills`, `~/.config/opencode/skill`, `~/.codex/skills`). After
+restarting the agent session, just tell it:
+
+> "create a project through nucleus"
+
+The agent runs the interview itself, assembles the skills, and builds the
+orchestration.
+
+### Manual install
+
+```bash
+git clone https://github.com/CaptchaQ/nucleus.git && cd nucleus
 npm install
 npm run build            # → dist/cli/index.js
+npm link                 # → global `nucleus` command
 
-# CLI:
-node dist/cli/index.js   # or, after `npm link`, just `nucleus`
+nucleus install          # register the skill into harnesses (or `--harness opencode`)
 ```
 
 ## Usage
@@ -78,6 +103,7 @@ nucleus load [--install] # assemble the skill bundle (opt. install externals via
 nucleus orchestrate      # build the subagent DAG from the loaded bundle
 nucleus improve <file>   # GAN improvement loop (Python bridge)
 nucleus skill add <name> # scaffold a custom skill in .agent-forge/skills/<name>/
+nucleus install          # register the agent skill into harnesses (claude-code/opencode/codex)
 nucleus catalog          # catalog of skills across all 7 sources
 nucleus doctor           # check environment and artifacts
 ```

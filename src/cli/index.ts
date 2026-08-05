@@ -15,6 +15,8 @@
 
 import { createInterface, type Interface } from "node:readline/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { homedir } from "node:os";
 import { readFile, mkdir, writeFile, readdir, access } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { buildProfile, persistProfile, GRILL_QUESTIONS, type GrillAnswers } from "../grill/runner.js";
@@ -30,9 +32,12 @@ import {
 } from "../wayfinder/runner.js";
 import { assembleBundle, SKILL_SOURCES, type SkillBundle } from "../loader/runner.js";
 import { buildOrchestration, persistOrchestration } from "../orchestrator/runner.js";
+import { installSkill, harnessTargets, listedSkills } from "../install/runner.js";
 import type { ProjectProfile } from "../types.js";
 
 const ROOT = process.cwd();
+/** Repo root of the running nucleus installation (skills/ lives there). */
+const REPO_ROOT = fileURLToPath(new URL("../..", import.meta.url));
 
 // ── tiny helpers ─────────────────────────────────────────────────────────────
 
@@ -74,6 +79,8 @@ Usage:
   nucleus orchestrate      Build the subagent DAG from the loaded skill bundle
   nucleus improve <file>   GAN-style improvement loop on <file> (Python bridge)
   nucleus skill add <name> Scaffold a custom skill under .agent-forge/skills/<name>/
+  nucleus install [--harness claude-code|opencode|codex|all]
+                             Register the nucleus-agent skill into agent harnesses
   nucleus catalog          Print the catalog of skills across all 7 sources
   nucleus doctor           Sanity-check environment and required paths
 `);
@@ -238,6 +245,28 @@ async function cmdSkillAdd(name: string): Promise<void> {
   log("Edit it, then run `nucleus catalog` to see it listed.");
 }
 
+async function cmdInstall(targets: string[]): Promise<void> {
+  const known = harnessTargets("").map((t) => t.harness);
+  const wanted = targets.length === 0 ? ["all"] : targets;
+  for (const t of wanted) {
+    if (t !== "all" && !known.includes(t)) {
+      err(`Unknown harness: ${t}. Known: ${known.join(", ")} (or "all").`);
+      return process.exit(1);
+    }
+  }
+  const written = await installSkill({ harnesses: wanted, repoRoot: REPO_ROOT });
+  if (written.length === 0) {
+    err("Nothing to install (no matching harnesses).");
+    return process.exit(1);
+  }
+  for (const t of written) {
+    const skills = await listedSkills(t.dir);
+    log(`✓ nucleus-agent skill → ${t.harness} (${t.dir}); ${skills.length} skills there`);
+  }
+  log("\nRestart your agent session so it loads the new skill.");
+  log("Then tell it: «создай проект через nucleus».");
+}
+
 async function cmdCatalog(): Promise<void> {
   log("Catalog of skill sources (the 7 external resources + nucleus builtin):\n");
   for (const src of SKILL_SOURCES) {
@@ -271,6 +300,20 @@ async function cmdDoctor(): Promise<void> {
     }
   }
   log(ok ? "\nAll nucleus artifacts present." : "\nSome artifacts missing — run the listed commands.");
+
+  // Harness registration check.
+  log("\nHarness skill registration:");
+  let regOk = false;
+  for (const t of harnessTargets(homedir())) {
+    const skills = await listedSkills(t.dir);
+    if (skills.includes("nucleus-agent")) {
+      log(`  ✓ nucleus-agent → ${t.harness}`);
+      regOk = true;
+    } else {
+      log(`  ✗ nucleus-agent missing from ${t.harness} (run \`nucleus install\`)`);
+    }
+  }
+  if (!regOk) log("Hint: \`nucleus install\` registers the agent skill in one command.");
 }
 
 // ── entrypoint ────────────────────────────────────────────────────────────────
@@ -297,6 +340,12 @@ switch (cmd) {
     if (rest[0] !== "add" || !rest[1]) usage();
     await cmdSkillAdd(rest[1]);
     break;
+  case "install": {
+    const hIdx = rest.indexOf("--harness");
+    const targets = hIdx >= 0 ? rest.slice(hIdx + 1).filter((a) => !a.startsWith("--")) : [];
+    await cmdInstall(targets.length ? targets : []);
+    break;
+  }
   case "catalog": await cmdCatalog(); break;
   case "doctor": await cmdDoctor(); break;
   default: usage();

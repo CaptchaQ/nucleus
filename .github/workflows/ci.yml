@@ -53,6 +53,16 @@ jobs:
           git -c user.email=ci@example.com -c user.name=CI commit -qm init
           PYTHONPATH=$GITHUB_WORKSPACE/python python -m nucleus_improve --artifact artifact.txt --tag ci --dummy --max-iterations 1
 
+  installers:
+    name: Installer scripts parse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: bash -n install.sh
+        run: bash -n scripts/install.sh
+      - name: powershell parse install.ps1
+        run: pwsh -NoProfile -Command "$null = [scriptblock]::Create((Get-Content -Raw scripts/install.ps1))"
+
   reindex:
     name: README skill table in sync
     runs-on: ubuntu-latest
