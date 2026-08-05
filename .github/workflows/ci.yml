@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  typecheck:
+    name: TypeScript (strict)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: tsc --noEmit
+        run: npx tsc --noEmit -p tsconfig.json
+
+  tests:
+    name: Node tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: npm test
+        run: npm test
+
+  python:
+    name: Python bridge
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.11"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: CLI help
+        run: PYTHONPATH=python python -m nucleus_improve --help
+      - name: Dummy improvement loop
+        run: |
+          git init -q smoke && cd smoke
+          echo "hello world" > artifact.txt
+          git add artifact.txt
+          git -c user.email=ci@example.com -c user.name=CI commit -qm init
+          PYTHONPATH=$GITHUB_WORKSPACE/python python -m nucleus_improve --artifact artifact.txt --tag ci --dummy --max-iterations 1
+
+  reindex:
+    name: README skill table in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: reindex and diff
+        run: |
+          npm run reindex
+          git diff --exit-code README.md README.ru.md

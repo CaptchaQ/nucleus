@@ -1,0 +1,176 @@
+<p align="center">
+  <img src="assets/nucleus-banner.svg" width="100%" alt="nucleus banner"/>
+</p>
+
+# nucleus
+
+**Утилита демарша для ИИ-агентов: от «хочу приложение» до работающего оркестра субагентов.**
+
+`nucleus` допрашивает пользователя (по методике mattpocock/grilling), строит карту
+decision tickets (wayfinder), подгружает скилы из 7 открытых экосистем гибридным
+лоадером, собирает оркестр субагентов и прогоняет артефакты через GAN-цикл
+самоулучшения (auto-improve). Ядро — Node.js + TypeScript, bridge самоулучшения —
+Python.
+
+[![Node](https://img.shields.io/badge/node-%3E%3D18.17-339933?logo=nodedotjs&logoColor=white)](package.json)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
+[![Python](https://img.shields.io/badge/python-3.8%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
+[![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+## Интегрированные экосистемы
+
+| Экосистема | ⭐ |
+|-----------|----|
+| [mattpocock/skills](https://github.com/mattpocock/skills) — grilling, wayfinder, TDD | 203k |
+| [affaan-m/ECC](https://github.com/affaan-m/ECC) — 281 skill / 67 agents | 238k |
+| [f/prompts.chat](https://github.com/f/prompts.chat) — библиотека промптов | 167k |
+| [google-labs-code/stitch-skills](https://github.com/google-labs-code/stitch-skills) — дизайн-генерация | 7.9k |
+| [emilkowalski/skills](https://github.com/emilkowalski/skills) — вкус и полировка UI | 25k |
+| [keepsimple.io/uxcore](https://keepsimple.io/ru/uxcore) — когнитивные искажения, nudge | datasource |
+| [crimeacs/auto-improve](https://github.com/crimeacs/auto-improve) — GAN-цикл улучшения | 107 |
+
+Подробный разбор — в [`catalog/index.md`](catalog/index.md) и [`docs/ANALYSIS.md`](docs/ANALYSIS.md).
+
+## Как это работает
+
+```
+┌──────────┐   ┌───────────┐   ┌──────────┐   ┌───────────────┐   ┌────────────┐
+│  init     │──▶│ wayfind   │──▶│ load     │──▶│  orchestrate  │──▶│  improve   │
+│  grill    │   │ tickets   │   │ skills   │   │  subagent DAG │   │  GAN loop  │
+└──────────┘   └───────────┘   └──────────┘   └───────────────┘   └────────────┘
+```
+
+```mermaid
+flowchart LR
+  A["nucleus init<br/>grill → profile + ADR + CONTEXT"] --> B["nucleus wayfind<br/>decision tickets map"]
+  B --> C["nucleus load<br/>hybrid skill bundle"]
+  C --> D["nucleus orchestrate<br/>subagent DAG + memory"]
+  D --> E["nucleus improve<br/>rubric-gated self-improve"]
+  E --> D
+  style A fill:#312e81,color:#c7d2fe
+  style B fill:#1e3a8a,color:#bfdbfe
+  style C fill:#0e7490,color:#cffafe
+  style D fill:#166534,color:#bbf7d0
+  style E fill:#7c2d12,color:#fed7aa
+```
+
+## Установка
+
+Требуется Node.js ≥ 18.17 и (для `improve`) Python 3.8+.
+
+```bash
+# собрать ядро
+npm install
+npm run build            # → dist/cli/index.js
+
+# CLI доступен как:
+node dist/cli/index.js   # или, после `npm link`, просто `nucleus`
+```
+
+## Использование
+
+```bash
+nucleus init             # допрос пользователя → .agent-forge/profile.json + ADR + CONTEXT.md
+nucleus wayfind          # построить/решить карту decision tickets
+nucleus load [--install] # собрать бандл скилов (опц. установка внешних через npx skills)
+nucleus orchestrate      # построить DAG субагентов из загруженного бандла
+nucleus improve <file>   # GAN-цикл улучшения файла (Python bridge)
+nucleus skill add <name> # скаффолд кастомного скила в .agent-forge/skills/<name>/
+nucleus catalog          # каталог скилов по всем 7 источникам
+nucleus doctor           # проверить окружение и артефакты
+```
+
+### Полный конвейер
+
+```bash
+nucleus init
+nucleus wayfind
+nucleus load
+nucleus orchestrate
+nucleus improve README.md --tag v1 --goal "hero that makes a dev try the CLI"
+```
+
+## Фазы
+
+### 1. `nucleus init` — допрос (grill)
+
+Коммуникационный разрыв между заказчиком и агентом — **#1 провал ИИ-разработки**.
+`init` ведёт по одному вопросу за раз, предлагая рекомендуемые ответы, и
+записывает решения, а не ищет факты. Правило: *факты — ищи сам, решения —
+спрашивай*. Результат: `ProjectProfile` → `docs/adr/0001-destination.md` +
+`CONTEXT.md` (общий язык).
+
+### 2. `nucleus wayfind` — decision tickets
+
+Слишком большая для одной сессии задача становится **картой тикетов-решений**
+(research / prototype / grilling / task), решаемых по одному к цели. Work за
+границей цели классифицируется *вне рамок*. Методы: поимённые ссылки, claim до
+работы, одна HITL-тикета за сессию.
+
+### 3. `nucleus load` — гибридный лоадер скилов
+
+Три способа доставки сразу:
+
+- **внешние** — `npx skills add <repo>` (mattpocock, ECC, stitch, emilkowalski, auto-improve);
+- **overlay** — кастомные в `.agent-forge/skills/<name>/SKILL.md`;
+- **builtin** — встроенные в `skills/`.
+
+Каталог (`nucleus catalog`) объединяет всё.
+
+### 4. `nucleus orchestrate` — оркестр субагентов
+
+Роли (planner, researcher, implementer, reviewer, tester, designer, security,
+docs, improver) берут скилы из каталога через таблицу `ROLE_BY_SKILL`, работают
+по DAG (downstream — работа «пиров»), общая память — файловый store.
+
+### 5. `nucleus improve` — GAN-цикл самоулучшения
+
+Порт `crimeacs/auto-improve`:
+
+```
+for each iteration:
+  MUTATE → N кандидатов   SCORE → рубрика (ОТДЕЛЬНАЯ модель)
+  DECIDE → pairwise 2-порядковый judge   COMMIT → git-история
+```
+
+Два анти-слоп-правила: судья отделён от мутатора (против «переписывания
+вкусом»), и pairwise-сравнение в **двух порядках** против позиционного сдвига.
+
+## Расширяемость: «изучи и добавь скилл»
+
+```bash
+nucleus skill add my-skill   # скаффолд .agent-forge/skills/my-skill/SKILL.md
+npm run reindex              # синхронизировать каталог и README-таблицу
+nucleus catalog              # подтвердить видимость
+```
+
+Скил ложится на нужный субагент автоматически через `ROLE_BY_SKILL`. Подробнее —
+в [`skills/nucleus-skill-add/SKILL.md`](skills/nucleus-skill-add/SKILL.md).
+
+## Встроенные скилы
+
+<!-- NUCLEUS:SKILLS:START -->
+| Skill | Description |
+|-------|-------------|
+| nucleus-improve | GAN-style self-improvement loop for any text artifact in the repo — READMEs, prompts, copy, contracts, rubric-gated. Mutates, grades with a SEPARATE model, keeps only pairwise-judged wins, commits the rest. The git history is the improvement log. Use when the user wants something measurably better, not just rewritten. |
+| nucleus-init | Kick start a project by grilling the user into a sharp ProjectProfile, ADR, and CONTEXT glossary before any code is written. Use when the user is starting a new project, says they "want to build something", or wants to bootstrap a plan. |
+| nucleus-orchestrate | Spin up a subagent DAG from the loaded skill bundle — planner, researcher, implementer, reviewer, tester, designer, security, docs, improver — each consulting its relevant skills, with shared memory and explicit downstream edges. Use after a skill bundle is loaded. |
+| nucleus-skill-add | Study and add a new skill (from an external repo, a directory, or from scratch) into the project's .agent-forge/skills/<name>/ space, scaffold it, reindex the catalog, and update the documentation. Use when the user says "изучи и добавь скилл" / "study and add this skill". |
+| nucleus-wayfind | Chart a big effort as a shared map of decision tickets on the issue tracker, and resolve them one at a time until the way to the destination is clear. Use when a project is too big to hold in one session, or decisions are still foggy after grilling. |
+<!-- NUCLEUS:SKILLS:END -->
+
+## Разработка
+
+```bash
+npm run build      # tsc
+npm test           # node --test (TS strip-types)
+npm run reindex    # синхронизация имён скилов в README
+```
+
+См. [`CONTRIBUTING.md`](CONTRIBUTING.md) и [`docs/PLAN.md`](docs/PLAN.md).
+
+## Лицензия
+
+[MIT](LICENSE). Соберите скилы из интегрированных экосистем согласно их
+лицензиям — каждая остаётся в своём репо/пространстве.

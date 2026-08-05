@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nucleus-improve"
+version = "0.1.0"
+description = "GAN-style self-improvement loop for any text artifact (nucleus Python bridge)."""
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = ["requests>=2.31"]
+authors = [{ name = "Nucleus contributors" }]
+
+[project.scripts]
+nucleus-improve = "nucleus_improve.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["python"]
+include = ["nucleus_improve*"]
+
+[tool.pytest.ini_options]
+testpaths = ["python/nucleus_improve/tests"]

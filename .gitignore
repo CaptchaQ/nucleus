@@ -1,0 +1,31 @@
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Runtime artifacts
+.agent-forge/sessions/
+.agent-forge/cache/
+results/
+improve/
+*.rubric.md
+*.tsv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,57 @@
+{
+  "name": "nucleus-agent",
+  "version": "0.1.0",
+  "description": "Kickoff-to-orchestration utility for AI coding agents. Grill a project into shape, load the right skills, spin up a subagent orch.",
+  "license": "MIT",
+  "author": "Nucleus contributors",
+  "homepage": "https://github.com/your-org/nucleus",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/nucleus.git"
+  },
+  "keywords": [
+    "ai-agents",
+    "skills",
+    "orchestration",
+    "grilling",
+    "wayfinder",
+    "subagents",
+    "claude-code",
+    "codex",
+    "cursor",
+    "auto-improve"
+  ],
+  "type": "module",
+  "bin": {
+    "nucleus": "./dist/cli/index.js"
+  },
+  "main": "./dist/cli/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "test": "node --test --experimental-strip-types 'src/**/*.test.ts'",
+    "reindex": "node --experimental-strip-types scripts/reindex.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "profiles",
+    "catalog",
+    "scripts/reindex.ts",
+    "assets/nucleus-banner.svg",
+    "README.md",
+    "README.ru.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "yaml": "^2.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "@types/node": "^20.14.10"
+  }
+}
