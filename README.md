@@ -1,107 +1,107 @@
-# nucleus — набор скилов для AI-агентов
+<p align="center">
+  <img src="assets/nucleus-banner.svg" alt="nucleus — skills for AI coding agents" width="780">
+</p>
 
-Проект для AI-кодинг-агентов: **набор SKILL.md-скилов + системный промпт
-(AGENTS.md)**. Агент сам проводит интервью перед стартом проекта, фиксирует
-профиль, а потом работает с проектом, применяя скилы из `skills/`.
+# nucleus — skills for AI coding agents
 
-Никакого CLI, npm-пакетов и сборки. Это просто файлы.
+nucleus is a **set of SKILL.md** (plus a system prompt `AGENTS.md`) for AI
+coding agents: opencode, claude-code, codex, omp. When you say "I want to
+build X", the agent **interviews you first** (design-tree with a frontier),
+**records a profile**, then **loads project skills** matched to your
+stack/domain and **orchestrates subagents** for autonomous work.
 
-## Как это работает
+No CLI, no npm packages, no build — just instruction files.
+
+## idea → ship
 
 ```
-интервью → профиль → план → реализация (скилы) → проверка
+setup → grilling → stitch → (wayfinder|spec) → implement → review → ship
+                                                       ↘ improve (GAN loop)
+                                                       ↘ orchestrate (subagents)
 ```
 
-1. **Интервью.** Агент задаёт вопросы по одному в чате (10 вопросов:
-   имя, destination, домен, стек, харнесс, трекер, качество, out-of-scope,
-   глоссарий). Ответы → `.agent-forge/profile.json`.
-2. **План.** Профиль разбивается на 3–5 проверяемых этапов →
-   `.agent-forge/plan.md`.
-3. **Реализация.** Агент работает по плану, применяя скилы. Большие
-   задачи распределяются по ролям (planner, implementer, reviewer, tester,
-   designer, docs).
-4. **Проверка.** Каждый этап проверяется; доработка — циклом improve.
+1. **`/setup`** — once per project: issue tracker, labels, docs location.
+2. **`/grilling`** — relentless interview via a design tree (rounds, frontier,
+   recommended answers). Facts are the agent's job, decisions are yours.
+   Output: `.agent-forge/profile.json`, `CONTEXT.md`, ADRs.
+3. **`/stitch`** — load library skills matched to domain/stack.
+4. **`/wayfinder`** — for big/foggy projects: a map of decision tickets.
+5. **`/spec`** — fold the conversation into a buildable spec on the tracker.
+6. **`/implement`** (driving `/tdd` from the library), closed by **`/review`**
+   (two axes: Standards+Spec, via parallel subagents).
+7. **`/improve`** — GAN-style refinement loop (judge ≠ mutator, pairwise
+   gate, three anti-stall stops).
+8. **`/orchestrate`** — for large work: roles (planner/implementer/reviewer/…)
+   and parallel subagents with self-contained plans.
 
-## Скилы
+## Core skills (`skills/<name>/SKILL.md`)
 
-| Скил | Когда применять |
-|------|-----------------|
-| `skills/interview/SKILL.md` | Начало проекта: интервью, профиль в `.agent-forge/profile.json` |
-| `skills/plan/SKILL.md` | После интервью: декомпозиция на этапы и задачи |
-| `skills/orchestrate/SKILL.md` | Большая задача: распределение по ролям |
-| `skills/improve/SKILL.md` | Доработка кода/артефактов циклом с обратной связью |
-| `skills/skill-add/SKILL.md` | Добавление нового скила в `skills/` |
+| Skill | When to use |
+|------|-------------|
+| `skills/setup/SKILL.md` | First-time project setup (tracker/labels/docs) |
+| `skills/grilling/SKILL.md` | Design-tree interview before any code; writes profile.json/CONTEXT.md/ADR |
+| `skills/stitch/SKILL.md` | After grilling — load library skills for the domain/stack |
+| `skills/wayfinder/SKILL.md` | Big/foggy project — a map of decision tickets |
+| `skills/spec/SKILL.md` | After grilling/wayfinder — a buildable spec from the conversation |
+| `skills/orchestrate/SKILL.md` | Large stage — distribute across roles and subagents |
+| `skills/review/SKILL.md` | Two-axis code review of a diff with fresh subagents |
+| `skills/improve/SKILL.md` | GAN-style refinement (mutator/judge/pairwise/checkpoint) |
+| `skills/domain/SKILL.md` | Actively maintain CONTEXT.md (glossary) and ADRs |
+| `skills/skill-add/SKILL.md` | Author a new skill in skills/ or skills/library/ |
 
-## Быстрый старт
+## Library, loaded per project (`skills/library/<name>/SKILL.md`)
 
-### Вариант 1 — в папке нового проекта
+| Skill | When to use |
+|------|-------------|
+| `skills/library/tdd/SKILL.md` | red→green loop, seams, vertical slices |
+| `skills/library/debug/SKILL.md` | Stubborn bugs — tight red loop, gated phases |
+| `skills/library/ux-review/SKILL.md` | UI/UX edits — frequency-gate, Before/After/Why, Block/Approve |
+| `skills/library/api-design/SKILL.md` | API/contract design — deep modules, canonical errors |
+| `skills/library/prototype/SKILL.md` | Design question needs a runnable answer — throwaway, N variants |
+
+New skill → `skill-add`. Load for a project → `stitch`.
+
+## Quick start
 
 ```bash
-# скопируй скилы и AGENTS.md в папку будущего проекта
-cp -r skills AGENTS.md /path/to/новый-проект/
-cd /path/to/новый-проект
-# запусти агента (opencode / claude-code / codex / omp) и скажи:
-#   «создай проект, сначала интервью»
-```
-
-Агент прочитает `AGENTS.md`, проведёт интервью, запишет
-`.agent-forge/profile.json` и начнёт работу по плану.
-
-### Вариант 2 — скилы глобально для агента
-
-Скопируй скилы в каталог скилов своего харнесса:
-
-| Харнесс | Каталог |
-|---------|---------|
-| opencode | `~/.config/opencode/skills/` |
-| claude-code | `~/.claude/skills/` |
-| codex | `~/.codex/skills/` |
-| omp | `~/.agents/skills/` |
-
-```bash
-cp -r skills/* ~/.claude/skills/
-# затем в любой папке: запусти агента и скажи «начни проект с интервью»
-```
-
-### Вариант 3 — одной командой
-
-```bash
-# POSIX
+# POSIX — all harnesses, full library
 bash <(curl -fsSL https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.sh)
+
+# Only part of the library for your stack
+bash install.sh --harness opencode --with tdd,debug,prototype
 
 # Windows PowerShell
 irm https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.ps1 | iex
 ```
 
-Скрипт копирует скилы во все поддерживаемые харнессы и кладёт `AGENTS.md`
-в текущую папку.
+The installer copies **core** (always) + the chosen **library** slice
+(`--with`) into the harness skill dirs and drops `AGENTS.md` into the current
+folder.
 
-## Артефакты проекта
+| Harness | Dir |
+|---------|-----|
+| opencode | `~/.config/opencode/skills/` |
+| claude-code | `~/.claude/skills/` |
+| codex | `~/.codex/skills/` |
+| omp | `~/.agents/skills/` |
 
-Всё, что агент создаёт по ходу работы, живёт в `.agent-forge/`:
+Run your agent in the project folder and say: "create a project, start with
+the interview".
 
-| Файл | Что это |
-|------|---------|
-| `profile.json` | Результат интервью: destination, домен, стек, out-of-scope, glossary |
-| `plan.md` | Декомпозиция на этапы с проверяемыми результатами |
-| `improvements.md` | Лог циклов улучшения (файл → критерий → итерация → результат) |
+## Project artifacts (`.agent-forge/`)
 
-## Правила для агентов
+| File | What it is |
+|------|------------|
+| `setup.json` | Project config: harness, tracker, labels, docs paths |
+| `profile.json` | The contract from the interview: destination, domain, stack, outOfScope, glossary |
+| `skills.json` | Manifest: active library skills + reason |
+| `improvements.md` | Log of improve cycles and debug post-mortems |
+| `plans/` | Self-contained plans from orchestrate |
 
-Полная инструкция — в [`AGENTS.md`](AGENTS.md). Главное:
+## Sources of mechanics
 
-- **Интервью обязательно** перед новым проектом, пока нет `profile.json`.
-- Один вопрос за раз, рекомендации вместо пустоты, факты агент узнаёт сам.
-- Профиль — контракт: код не противоречит `profile.json`.
-- Скил читается перед применением; одна фаза — один скил.
-- Out-of-scope в план не попадает никогда.
+grilling/wayfinder/domain/to-spec/tdd/review — [mattpocock/skills](https://github.com/mattpocock/skills) · per-project skill loading — [affaan-m/ECC](https://github.com/affaan-m/ECC) · frequency-gate, strict output, audit-then-plan — [emilkowalski/skills](https://github.com/emilkowalski/skills) · GAN refinement loop — [crimeacs/auto-improve](https://github.com/crimeacs/auto-improve) · prompt parameterization & auto-activation — [f/prompts.chat](https://github.com/f/prompts.chat) · UX heuristics — [keepsimple.io/ru/uxcore](https://keepsimple.io/ru/uxcore) · baton skill composition — [google-labs-code/stitch-skills](https://github.com/google-labs-code/stitch-skills).
 
-## Расширение
-
-Новый скил = папка `skills/<имя>/SKILL.md` по шаблону из
-`skills/skill-add/SKILL.md` + строка в таблице скилов этого README и в
-AGENTS.md.
-
-## Лицензия
+## License
 
 [MIT](LICENSE).

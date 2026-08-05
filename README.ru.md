@@ -1,55 +1,81 @@
-# nucleus — набор скилов для AI-агентов
+<p align="center">
+  <img src="assets/nucleus-banner.svg" alt="nucleus — skills for AI coding agents" width="780">
+</p>
 
-Проект для AI-кодинг-агентов: **набор SKILL.md-скилов + системный промпт
-(AGENTS.md)**. Агент сам проводит интервью перед стартом проекта, фиксирует
-профиль, а потом работает с проектом, применяя скилы из `skills/`.
+# nucleus — навыки для AI-кодинг-агентов
 
-Никакого CLI, npm-пакетов и сборки. Это просто файлы.
+Nucleus — это **набор SKILL.md** (плюс системный промпт `AGENTS.md`) для
+AI-кодинг-агентов: opencode, claude-code, codex, omp. Когда вы говорите
+«хочу создать X», агент **сначала интервьюирует вас** (дизайн-дерево с
+фронтиром), **фиксирует профиль**, затем **подгружает проектные навыки**
+под стек/домен и **оркеструет субагентов** для автономной работы.
 
-## Как это работает
+Никакого CLI, npm-пакетов, сборки — это просто файлы с инструкциями.
+
+## Идея → поставка
 
 ```
-интервью → профиль → план → реализация (скилы) → проверка
+setup → grilling → stitch → (wayfinder|spec) → implement → review → ship
+                                                       ↘ improve (цикл)
+                                                       ↘ orchestrate (субагенты)
 ```
 
-1. **Интервью.** Агент задаёт вопросы по одному в чате (10 вопросов:
-   имя, destination, домен, стек, харнесс, трекер, качество, out-of-scope,
-   глоссарий). Ответы → `.agent-forge/profile.json`.
-2. **План.** Профиль разбивается на 3–5 проверяемых этапов →
-   `.agent-forge/plan.md`.
-3. **Реализация.** Агент работает по плану, применяя скилы. Большие
-   задачи распределяются по ролям (planner, implementer, reviewer, tester,
-   designer, docs).
-4. **Проверка.** Каждый этап проверяется; доработка — циклом improve.
+1. **`/setup`** — один раз: issue-tracker, метки, место доков.
+2. **`/grilling`** — беспощадное интервью дизайн-деревом (раунды, фронтир,
+   рекомендованные ответы). Факты ищет агент, решения — человек. Результат:
+   `.agent-forge/profile.json`, `CONTEXT.md`, ADR.
+3. **`/stitch`** — подгрузить под домен/стек навыки из `skills/library/`.
+4. **`/wayfinder`** — если большой/туманный проект: карта decision-тикетов.
+5. **`/spec`** — свернуть разговор в спецификацию на трекере.
+6. **`/implement`** (через `/tdd` из библиотеки), замыкает **`/review`**
+   (две оси: Standards+Spec, параллельными субагентами).
+7. **`/improve`** — GAN-цикл доработки (судья ≠ мутатор, pairwise-gate, три
+   стопора от зацикливания).
+8. **`/orchestrate`** — для крупного: роли (planner/implementer/reviewer/…)
+   и параллельные субагенты, self-contained планы.
 
-## Скилы
+## Навыки ядра (`skills/<name>/SKILL.md`)
 
-| Скил | Когда применять |
+| Навык | Когда применять |
 |------|-----------------|
-| `skills/interview/SKILL.md` | Начало проекта: интервью, профиль в `.agent-forge/profile.json` |
-| `skills/plan/SKILL.md` | После интервью: декомпозиция на этапы и задачи |
-| `skills/orchestrate/SKILL.md` | Большая задача: распределение по ролям |
-| `skills/improve/SKILL.md` | Доработка кода/артефактов циклом с обратной связью |
-| `skills/skill-add/SKILL.md` | Добавление нового скила в `skills/` |
+| `skills/setup/SKILL.md` | Первичная настройка проекта (tracker/labels/docs) |
+| `skills/grilling/SKILL.md` | Интервью дизайн-деревом перед стартом; заполняет profile.json/CONTEXT.md/ADR |
+| `skills/stitch/SKILL.md` | После grilling — подгрузить библиотечные навыки под домен/стек |
+| `skills/wayfinder/SKILL.md` | Большой/туманный проект — карта decision-тикетов |
+| `skills/spec/SKILL.md` | После grilling/wayfinder — спецификация из разговора |
+| `skills/orchestrate/SKILL.md` | Этап большой — распределить по ролям и субагентам |
+| `skills/review/SKILL.md` | Code-review диффа двумя осями свежими субагентами |
+| `skills/improve/SKILL.md` | Доработка GAN-циклом (мутатор/судья/pairwise/чекпойнт) |
+| `skills/domain/SKILL.md` | Активно строить CONTEXT.md (глоссарий) и ADR |
+| `skills/skill-add/SKILL.md` | Создать новый навык в skills/ или skills/library/ |
+
+## Библиотека под проект (`skills/library/<name>/SKILL.md`)
+
+| Навык | Когда применять |
+|------|-----------------|
+| `skills/library/tdd/SKILL.md` | red→green loop, seams, vertical slices |
+| `skills/library/debug/SKILL.md` | Сопротивляющиеся баги — tight red loop, gated фазы |
+| `skills/library/ux-review/SKILL.md` | UI/UX правки — frequency-gate, Before/After/Why, Block/Approve |
+| `skills/library/api-design/SKILL.md` | Проектирование API/контракта — deep modules, canonical errors |
+| `skills/library/prototype/SKILL.md` | Дизайн-вопрос требует runnable ответа — throwaway, N вариантов |
+
+Новый навык → `skill-add`. Подгрузить под проект → `stitch`.
 
 ## Быстрый старт
 
-### Вариант 1 — в папке нового проекта
-
 ```bash
-# скопируй скилы и AGENTS.md в папку будущего проекта
-cp -r skills AGENTS.md /path/to/новый-проект/
-cd /path/to/новый-проект
-# запусти агента (opencode / claude-code / codex / omp) и скажи:
-#   «создай проект, сначала интервью»
+# POSIX — все харнессы, вся библиотека
+bash <(curl -fsSL https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.sh)
+
+# Только часть библиотеки под стек
+bash install.sh --harness opencode --with tdd,debug,prototype
+
+# Windows PowerShell
+irm https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.ps1 | iex
 ```
 
-Агент прочитает `AGENTS.md`, проведёт интервью, запишет
-`.agent-forge/profile.json` и начнёт работу по плану.
-
-### Вариант 2 — скилы глобально для агента
-
-Скопируй скилы в каталог скилов своего харнесса:
+Скрипт копирует **ядро** (всегда) + выбранную часть **библиотеки**
+(`--with`) в каталоги скилов харнесса и кладёт `AGENTS.md` в текущую папку.
 
 | Харнесс | Каталог |
 |---------|---------|
@@ -58,49 +84,21 @@ cd /path/to/новый-проект
 | codex | `~/.codex/skills/` |
 | omp | `~/.agents/skills/` |
 
-```bash
-cp -r skills/* ~/.claude/skills/
-# затем в любой папке: запусти агента и скажи «начни проект с интервью»
-```
+Запустите агент в папке проекта и скажите: «создай проект, сначала интервью».
 
-### Вариант 3 — одной командой
-
-```bash
-# POSIX
-bash <(curl -fsSL https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.sh)
-
-# Windows PowerShell
-irm https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.ps1 | iex
-```
-
-Скрипт копирует скилы во все поддерживаемые харнессы и кладёт `AGENTS.md`
-в текущую папку.
-
-## Артефакты проекта
-
-Всё, что агент создаёт по ходу работы, живёт в `.agent-forge/`:
+## Артефакты проекта (`.agent-forge/`)
 
 | Файл | Что это |
 |------|---------|
-| `profile.json` | Результат интервью: destination, домен, стек, out-of-scope, glossary |
-| `plan.md` | Декомпозиция на этапы с проверяемыми результатами |
-| `improvements.md` | Лог циклов улучшения (файл → критерий → итерация → результат) |
+| `setup.json` | Конфиг проекта: harness, tracker, метки, пути доков |
+| `profile.json` | Контракт из интервью: destination, domain, stack, outOfScope, glossary |
+| `skills.json` | Manifest: активные библиотечные навыки + reason |
+| `improvements.md` | Лог improve-циклов и post-mortem debug-ов |
+| `plans/` | Self-contained планы из orchestrate |
 
-## Правила для агентов
+## Источники механик
 
-Полная инструкция — в [`AGENTS.md`](AGENTS.md). Главное:
-
-- **Интервью обязательно** перед новым проектом, пока нет `profile.json`.
-- Один вопрос за раз, рекомендации вместо пустоты, факты агент узнаёт сам.
-- Профиль — контракт: код не противоречит `profile.json`.
-- Скил читается перед применением; одна фаза — один скил.
-- Out-of-scope в план не попадает никогда.
-
-## Расширение
-
-Новый скил = папка `skills/<имя>/SKILL.md` по шаблону из
-`skills/skill-add/SKILL.md` + строка в таблице скилов этого README и в
-AGENTS.md.
+grilling/wayfinder/domain/to-spec/tdd/review — [mattpocock/skills](https://github.com/mattpocock/skills) · подгрузка под проект — [affaan-m/ECC](https://github.com/affaan-m/ECC) · frequency-gate, strict output, audit-then-plan — [emilkowalski/skills](https://github.com/emilkowalski/skills) · GAN-цикл улучшения — [crimeacs/auto-improve](https://github.com/crimeacs/auto-improve) · параметризация промптов и автоактивация — [f/prompts.chat](https://github.com/f/prompts.chat) · UX-эвристики — [keepsimple.io/ru/uxcore](https://keepsimple.io/ru/uxcore) · композиция «baton» — [google-labs-code/stitch-skills](https://github.com/google-labs-code/stitch-skills).
 
 ## Лицензия
 

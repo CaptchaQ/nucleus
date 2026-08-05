@@ -15,5 +15,7 @@ jobs:
         run: bash scripts/validate.sh
       - name: Installer syntax (bash)
         run: bash -n install.sh
+      - name: Installer help (bash)
+        run: bash install.sh --help || true
       - name: Installer syntax (PowerShell)
         run: pwsh -NoProfile -Command "[System.Management.Automation.Language.Parser]::ParseFile('install.ps1', [ref]\$null, [ref]\$null) > \$null; if (\$?) { 'pwsh parse ok' }"
