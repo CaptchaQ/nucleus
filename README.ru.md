@@ -41,29 +41,34 @@ nucleus **не имеет собственных скилов**. Он вендо
 URL + commit SHA + дата клонирования. Каждый `skills/<vendor>/LICENSE` — копия
 upstream лицензии.
 
-## Быстрый старт
+## Быстрый старт (одна команда в папке проекта)
+
+Создали папку, зашли в неё, одна команда — установилось:
 
 ```bash
-# Все харнессы, все вендоры
-bash <(curl -fsSL https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.sh)
-
-# Только нужные харнессы и вендоры под стек
-bash install.sh --harness opencode --vendors mattpocock,auto-improve,ecc
+# POSIX (Linux / macOS / WSL)
+bash <(curl -fsSL https://cdn.jsdelivr.net/gh/CaptchaQ/nucleus@main/install.sh)
+# (raw.githubusercontent.com/CaptchaQ/nucleus/main/install.sh тоже работает,
+# но может задерживать на кэше ~5 мин после свежего push)
 
 # Windows PowerShell
 irm https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.ps1 | iex
 ```
 
-`install.sh` копирует vendored скилы в каталоги скилов харнесса (core —
-`skills/<vendor>/<skill>/`) и кладёт `AGENTS.md` (тонкий роутер) в текущую
-папку.
+По умолчанию (без флагов) кладёт `AGENTS.md` + всё дерево `skills/` (53
+upstream-скила) **прямо в текущую папку** — проект self-contained. Затем
+открываете папку в агенте и говорите «хочу создать …, сначала интервью
+`/grilling`». Скилы лежат локально — никаких глобальных установок не нужно.
 
-| Харнесс | Каталог |
-|---------|---------|
-| opencode | `~/.config/opencode/skills/` |
-| claude-code | `~/.claude/skills/` |
-| codex | `~/.codex/skills/` |
-| omp | `~/.agents/skills/` |
+Опционально: `--harness opencode` дополнительно ставит скилы в глобальные
+каталоги харнесса (тогда `/name` работает через harness-discovery и вне этой
+папки). `--vendors mattpocock,auto-improve` ограничивает набор. См.
+`install.sh --help`.
+
+При `--harness` (опционально) скилы дополнительно копируются в глобальные
+каталоги харнесса: opencode — `~/.config/opencode/skills/`, claude-code —
+`~/.claude/skills/`, codex — `~/.codex/skills/`, omp — `~/.agents/skills/`.
+Без `--harness` всё остаётся локально в `skills/` папки проекта.
 
 Запускаете агента и говорите: «хочу создать …, сначала интервью `/grilling`».
 

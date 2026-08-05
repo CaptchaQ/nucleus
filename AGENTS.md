@@ -138,7 +138,7 @@ irm https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.ps1 | iex
 ```
 ```bash
 # POSIX (bash)
-bash <(curl -fsSL https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.sh)
+bash <(curl -fsSL https://cdn.jsdelivr.net/gh/CaptchaQ/nucleus@main/install.sh)
 ```
 
 По умолчанию (без флагов) кладёт `AGENTS.md` + всё дерево `skills/` (53 upstream
