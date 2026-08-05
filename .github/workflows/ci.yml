@@ -61,7 +61,7 @@ jobs:
       - name: bash -n install.sh
         run: bash -n scripts/install.sh
       - name: powershell parse install.ps1
-        run: pwsh -NoProfile -Command "$null = [scriptblock]::Create((Get-Content -Raw scripts/install.ps1))"
+        run: pwsh -NoProfile -Command "\$null = [scriptblock]::Create((Get-Content -Raw scripts/install.ps1))"
 
   reindex:
     name: README skill table in sync
