@@ -29,8 +29,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
-    "test": "node --test --experimental-strip-types 'src/**/*.test.ts'",
-    "reindex": "node --experimental-strip-types scripts/reindex.ts",
+    "test": "npm run build && node --test \"tests/*.test.mjs\"",
+    "reindex": "node scripts/reindex.mjs",
     "prepublishOnly": "npm run build"
   },
   "engines": {
@@ -41,7 +41,7 @@
     "skills",
     "profiles",
     "catalog",
-    "scripts/reindex.ts",
+    "scripts/reindex.mjs",
     "assets/nucleus-banner.svg",
     "README.md",
     "README.ru.md",

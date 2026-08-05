@@ -1,27 +1,21 @@
 /**
- * reindex.ts — sync the README "Loaded skills" tables with the actual skill
+ * reindex.mjs — sync the README "Loaded skills" tables with the actual skill
  * tree. Scans the skills dirs (builtin) and .agent-forge/skills dirs
  * (overlay) for SKILL.md files, then rewrites the table between the
  * NUCLEUS:SKILLS markers in both README.md and README.ru.md.
  *
- * Run: npm run reindex  (uses Node's --experimental-strip-types)
+ * Run: npm run reindex  (plain ESM — works on any Node >= 18)
  */
 import { readdir, readFile, writeFile } from "node:fs/promises";
-import { join, basename } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const START = "<!-- NUCLEUS:SKILLS:START -->";
 const END = "<!-- NUCLEUS:SKILLS:END -->";
 
-interface Row {
-  name: string;
-  description: string;
-  overlay: boolean;
-}
-
-async function scan(dir: string, overlay: boolean): Promise<Row[]> {
-  const rows: Row[] = [];
+async function scan(dir, overlay) {
+  const rows = [];
   let entries;
   try {
     entries = await readdir(dir, { withFileTypes: true });
@@ -30,10 +24,9 @@ async function scan(dir: string, overlay: boolean): Promise<Row[]> {
   }
   for (const ent of entries) {
     if (!ent.isDirectory()) continue;
-    const skillFile = join(dir, ent.name, "SKILL.md");
-    let raw: string;
+    let raw;
     try {
-      raw = await readFile(skillFile, "utf8");
+      raw = await readFile(join(dir, ent.name, "SKILL.md"), "utf8");
     } catch {
       continue; // no SKILL.md → not a skill dir
     }
@@ -44,9 +37,13 @@ async function scan(dir: string, overlay: boolean): Promise<Row[]> {
   return rows;
 }
 
-function table(rows: Row[]): string {
+function table(rows) {
   if (rows.length === 0) {
-    return "| Skill | Description |\n|-------|-------------|\n| _none yet_ | _run `npm run reindex` after adding skills_ |";
+    return (
+      "| Skill | Description |\n" +
+      "|-------|-------------|\n" +
+      "| _none yet_ | _run `npm run reindex` after adding skills_ |"
+    );
   }
   const head = "| Skill | Description |\n|-------|-------------|\n";
   const body = rows
@@ -58,7 +55,7 @@ function table(rows: Row[]): string {
   return head + body;
 }
 
-function replaceBetween(markdown: string, tbl: string): string {
+function replaceBetween(markdown, tbl) {
   const a = markdown.indexOf(START);
   const b = markdown.indexOf(END);
   if (a === -1 || b === -1 || b < a) {
@@ -68,7 +65,7 @@ function replaceBetween(markdown: string, tbl: string): string {
   return markdown.slice(0, a) + seg + markdown.slice(b + END.length);
 }
 
-async function main(): Promise<void> {
+async function main() {
   const [builtin, overlay] = await Promise.all([
     scan(join(ROOT, "skills"), false),
     scan(join(ROOT, ".agent-forge", "skills"), true),

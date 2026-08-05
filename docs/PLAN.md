@@ -34,7 +34,7 @@ src/
                         cmdImprove/cmdSkillAdd/cmdCatalog/cmdDoctor + шаблон SKILL
 python/nucleus_improve/ — фаза 5: GAN-цикл (mutate→score→pairwise→commit),
                         провайдеры Gemini/OpenAI, dummy-режим
-scripts/reindex.ts   — синхронизация таблицы скилов в README
+scripts/reindex.mjs — синхронизация таблицы скилов в README
 skills/              — builtin-скилы (nucleus-init, -wayfind, -orchestrate,
                         -improve, -skill-add)
 profiles/<domain>/   — рекомендуемые бандлы по доменам
