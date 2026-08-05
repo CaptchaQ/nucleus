@@ -4,10 +4,10 @@
   "description": "Kickoff-to-orchestration utility for AI coding agents. Grill a project into shape, load the right skills, spin up a subagent orch.",
   "license": "MIT",
   "author": "Nucleus contributors",
-  "homepage": "https://github.com/your-org/nucleus",
+  "homepage": "https://github.com/CaptchaQ/nucleus",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/nucleus.git"
+    "url": "https://github.com/CaptchaQ/nucleus.git"
   },
   "keywords": [
     "ai-agents",

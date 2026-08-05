@@ -137,6 +137,31 @@ for each iteration:
 Два анти-слоп-правила: судья отделён от мутатора (против «переписывания
 вкусом»), и pairwise-сравнение в **двух порядках** против позиционного сдвига.
 
+## Использование из агентского CLI (opencode / omp / claude-code / codex)
+
+Nucleus спроектирован так, чтобы **агент гонял конвейер, а не человек**.
+Вы говорите агенту: *«создай проект для заметок через nucleus»* — и агент:
+
+1. Получает банк вопросов: `nucleus init --questions` (JSON).
+2. Сам проводит интервью у вас в чате — по одному вопросу, с рекомендациями.
+3. Пишет ответы в файл и прогоняет `nucleus init --answers answers.json` (без интерактива).
+4. Строит карту решений: `nucleus wayfind --json`.
+5. Собирает бандл скилов: `nucleus load`.
+6. Строит DAG субагентов: `nucleus orchestrate`.
+7. Строит проект по артефактам: `profile.json` (стек, глоссарий, out-of-scope),
+   `wayfinder.json` (тикеты), `orchestration.json` (роли + скилы + downstream).
+
+Агенту достаточно загрузить мета-скилл [`skills/nucleus-agent/SKILL.md`](skills/nucleus-agent/SKILL.md) —
+он описывает весь протокол: когда использовать, как проводить интервью, как
+потреблять артефакты.
+
+```bash
+# всё, что видит человек:
+nucleus init --questions   # банк вопросов для агентского интервью
+nucleus init --answers a.json   # профиль из готовых ответов (неинтерактивно)
+nucleus wayfind --json  # карта решений JSON-ом, без диалога
+```
+
 ## Расширяемость: «изучи и добавь скилл»
 
 ```bash
@@ -153,6 +178,7 @@ nucleus catalog              # подтвердить видимость
 <!-- NUCLEUS:SKILLS:START -->
 | Skill | Description |
 |-------|-------------|
+| nucleus-agent | How a coding agent (opencode, omp, claude-code, codex, cursor) bootstraps a new project through the nucleus pipeline. Use when the user says "создай проект через nucleus" / "create a project with nucleus" / "use nucleus" — the agent runs the interview itself, feeds answers to nucleus, and consumes profile/wayfinder/bundle/orchestration artifacts to build the project. |
 | nucleus-improve | GAN-style self-improvement loop for any text artifact in the repo — READMEs, prompts, copy, contracts, rubric-gated. Mutates, grades with a SEPARATE model, keeps only pairwise-judged wins, commits the rest. The git history is the improvement log. Use when the user wants something measurably better, not just rewritten. |
 | nucleus-init | Kick start a project by grilling the user into a sharp ProjectProfile, ADR, and CONTEXT glossary before any code is written. Use when the user is starting a new project, says they "want to build something", or wants to bootstrap a plan. |
 | nucleus-orchestrate | Spin up a subagent DAG from the loaded skill bundle — planner, researcher, implementer, reviewer, tester, designer, security, docs, improver — each consulting its relevant skills, with shared memory and explicit downstream edges. Use after a skill bundle is loaded. |

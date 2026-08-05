@@ -56,7 +56,9 @@ const ROLE_BY_SKILL: Record<string, AgentRole> = {
   // auto-improve
   "auto-improve": "improver",
   // nucleus
+  "nucleus-agent": "planner",
   "nucleus-init": "planner",
+  "nucleus-wayfind": "planner",
   "nucleus-orchestrate": "planner",
   "nucleus-improve": "improver",
   "nucleus-skill-add": "planner",

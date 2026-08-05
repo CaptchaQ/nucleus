@@ -66,7 +66,10 @@ function usage(): never {
 
 Usage:
   nucleus init             Grill the user; persist .agent-forge/profile.json + ADR + CONTEXT.md
+  nucleus init --questions Dump the question bank as JSON (agent protocol)
+  nucleus init --answers <file.json>  Build the profile from answers, non-interactive
   nucleus wayfind          Chart/resolve decision tickets on the wayfinder map
+  nucleus wayfind --json   Chart/print the map as JSON, no interaction
   nucleus load [--install] Assemble the skill bundle (optionally install externals via npx skills)
   nucleus orchestrate      Build the subagent DAG from the loaded skill bundle
   nucleus improve <file>   GAN-style improvement loop on <file> (Python bridge)
@@ -79,9 +82,30 @@ Usage:
 
 // ── commands ──────────────────────────────────────────────────────────────────
 
-async function cmdInit(): Promise<void> {
+async function cmdInit(questionsOnly: boolean, answersFile?: string): Promise<void> {
+  // Agent protocol: dump the question bank so the agent can run the interview
+  // itself (one question at a time, in its own chat) and submit answers.
+  if (questionsOnly) {
+    log(JSON.stringify(GRILL_QUESTIONS, null, 2));
+    return;
+  }
+  let answers: GrillAnswers = {};
+  if (answersFile) {
+    const fromFile = await readJson<GrillAnswers>(answersFile);
+    if (!fromFile) {
+      err(`Cannot read answers file: ${answersFile}`);
+      return process.exit(1);
+    }
+    answers = fromFile;
+    const profile = buildProfile(answers);
+    const { adrDir, contextFile } = await persistProfile(ROOT, profile);
+    log(`✓ Profile → .agent-forge/profile.json`);
+    log(`✓ ADR-0001 → ${adrDir}`);
+    log(`✓ CONTEXT  → ${contextFile}`);
+    log(`\nNext: \`nucleus wayfind\` to chart decision tickets.`);
+    return;
+  }
   const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const answers: GrillAnswers = {};
   log("nucleus init — relentless interview (one question at a time, with recommended answers)\n");
   for (const q of GRILL_QUESTIONS) {
     if (q.dependsOn && !q.dependsOn.every((id) => answers[id])) continue;
@@ -104,7 +128,7 @@ async function cmdInit(): Promise<void> {
   log(`\nNext: \`nucleus wayfind\` to chart decision tickets.`);
 }
 
-async function cmdWayfind(): Promise<void> {
+async function cmdWayfind(jsonMode: boolean): Promise<void> {
   const profile = await readJson<ProjectProfile>(join(ROOT, ".agent-forge", "profile.json"));
   if (!profile) {
     err("No profile found. Run `nucleus init` first.");
@@ -115,10 +139,19 @@ async function cmdWayfind(): Promise<void> {
     map = emptyMap(profile);
     map.tickets = chartInitialFrontier(profile);
     await saveMap(ROOT, map);
+    if (jsonMode) {
+      log(JSON.stringify(map, null, 2));
+      return;
+    }
     log(`✓ Charted ${map.tickets.length} initial decision tickets.`);
     log("Frontier:");
     for (const t of frontier(map)) log(`  • ${t.id} [${t.type}/${t.mode}] ${t.title}`);
     log(`\nMap → .agent-forge/wayfinder.json`);
+    return;
+  }
+  if (jsonMode) {
+    // Agent protocol: dump the map (or just the frontier) without interaction.
+    log(JSON.stringify(map, null, 2));
     return;
   }
   // Resolve next frontier ticket interactively.
@@ -244,8 +277,14 @@ async function cmdDoctor(): Promise<void> {
 
 const [cmd, ...rest] = process.argv.slice(2);
 switch (cmd) {
-  case "init": await cmdInit(); break;
-  case "wayfind": await cmdWayfind(); break;
+  case "init": {
+    const qIdx = rest.indexOf("--questions");
+    const aIdx = rest.indexOf("--answers");
+    if (qIdx >= 0 && aIdx >= 0) usage();
+    await cmdInit(qIdx >= 0, aIdx >= 0 ? rest[aIdx + 1] : undefined);
+    break;
+  }
+  case "wayfind": await cmdWayfind(rest.includes("--json")); break;
   case "load": await cmdLoad(rest.includes("--install")); break;
   case "orchestrate": await cmdOrchestrate(); break;
   case "improve": {

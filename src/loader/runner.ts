@@ -93,7 +93,7 @@ export const SKILL_SOURCES: SkillSourceDef[] = [
     repo: "nucleus-builtin",
     label: "nucleus — kickoff, orchestration, improve, skill-add",
     domains: [],
-    picks: ["nucleus-init", "nucleus-wayfind", "nucleus-orchestrate", "nucleus-improve", "nucleus-skill-add"],
+    picks: ["nucleus-agent", "nucleus-init", "nucleus-wayfind", "nucleus-orchestrate", "nucleus-improve", "nucleus-skill-add"],
     install: "builtin",
   },
 ];

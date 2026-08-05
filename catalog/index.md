@@ -20,7 +20,7 @@ Nucleus объединяет 7 внешних экосистем + собств�
 | 5 | [emilkowalski/skills](https://github.com/emilkowalski/skills) | npx-skills | вкус/полировка: emil-design-eng, review-animations, improve-animations, pick-ui-library, apple-design → UI-качество | load |
 | 6 | [keepsimple.io/uxcore](https://keepsimple.io/ru/uxcore) | datasource | библиотека когнитивных искажений и nudge-стратегий; рубрики UX для продуктовых проектов | improve (рубрики) |
 | 7 | [crimeacs/auto-improve](https://github.com/crimeacs/auto-improve) | npx-skills + python | GAN-цикл самоулучшения текстовых артефактов (port в `python/nucleus_improve`) | improve |
-| — | nucleus (этот репозиторий) | builtin | nucleus-init, nucleus-wayfind, nucleus-orchestrate, nucleus-improve, nucleus-skill-add | все |
+| — | nucleus (этот репозиторий) | builtin | nucleus-agent, nucleus-init, nucleus-wayfind, nucleus-orchestrate, nucleus-improve, nucleus-skill-add | все |
 
 ## Что взять из каждого (для чтения README расшифровка)
 
