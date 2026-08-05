@@ -88,3 +88,36 @@ test("agent protocol: buildProfile from file answers", async () => {
   assert.deepEqual(profile.languages, ["typescript"]);
   assert.deepEqual(profile.outOfScope, ["мобильное приложение"]);
 });
+
+test("bootstrap: defaultAnswers fills a usable profile", async () => {
+  const { defaultAnswers, renderAgentsMd } = await import("../dist/bootstrap/runner.js");
+  const answers = defaultAnswers("C:/Projects/github/boom", "fullstack");
+  assert.equal(answers.name, "boom");
+  assert.equal(answers.domain, "fullstack");
+  assert.match(answers.destination, /boom/);
+  const { buildProfile } = await import("../dist/grill/runner.js");
+  const profile = buildProfile(answers);
+  assert.equal(profile.harness, "opencode");
+  assert.equal(profile.tracker, "github");
+  assert.deepEqual(profile.languages, ["typescript"]);
+});
+
+test("bootstrap: renderAgentsMd carries the destination and roles", async () => {
+  const { renderAgentsMd } = await import("../dist/bootstrap/runner.js");
+  const { buildProfile } = await import("../dist/grill/runner.js");
+  const profile = buildProfile({
+    name: "svc",
+    destination: "чат-сервис на Node",
+    domain: "backend",
+    languages: "typescript",
+    frameworks: "node",
+    harness: "opencode",
+    tracker: "local",
+  });
+  const md = renderAgentsMd(profile);
+  assert.match(md, /# Project instructions — svc/);
+  assert.match(md, /чат-сервис на Node/);
+  assert.match(md, /Domain: backend/);
+  assert.ok(md.includes("- implementer"));
+  assert.ok(md.includes("- reviewer"));
+});

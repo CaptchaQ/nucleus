@@ -96,6 +96,7 @@ nucleus install          # зарегистрировать скилл в хар
 
 ```bash
 nucleus init             # допрос пользователя → .agent-forge/profile.json + ADR + CONTEXT.md
+nucleus bootstrap        # одна команда: профиль → карта → скилы → оркестрация → AGENTS.md
 nucleus wayfind          # построить/решить карту decision tickets
 nucleus load [--install] # собрать бандл скилов (опц. установка внешних через npx skills)
 nucleus orchestrate      # построить DAG субагентов из загруженного бандла
@@ -115,6 +116,35 @@ nucleus load
 nucleus orchestrate
 nucleus improve README.md --tag v1 --goal "hero that makes a dev try the CLI"
 ```
+
+## Пространство проекта одной командой
+
+Заведите папку под новый проект, откройте в ней PowerShell и выполните:
+
+```powershell
+nucleus bootstrap
+```
+
+`bootstrap` неинтерактивно настраивает рабочее пространство для агентов:
+
+1. **Профиль** — из `answers.json`, если он лежит рядом (`--answers <file>`),
+   или из разумных дефолтов (имя = имя папки, домен `fullstack`,
+   харнесс `opencode`); существующий `.agent-forge/profile.json` **не
+   перезаписывается** (можно уточнить через `nucleus init --answers`).
+2. **Карта решений** — `.agent-forge/wayfinder.json`.
+3. **Бандл скилов** — `.agent-forge/bundle.json` (флаг `--install` добавит
+   внешние репозитории через `npx skills add`).
+4. **Оркестрация** — DAG субагентов в `.agent-forge/orchestration.json`.
+5. **`AGENTS.md`** — «системный промпт» проекта: omp / opencode / claude-code /
+   codex читают его при старте сессии и сразу знают миссию, домен, стек, роли,
+   общий язык и вне-скоуп.
+
+После этого запустите агента **в этой же папке** (`opencode`, `omp`,
+`claude-code`…) и работайте — стартовые инструкции уже подхвачены из
+`AGENTS.md`.
+
+Опции: `--domain web|ui|backend|fullstack|data|ml|cli|mobile|infra|content`
+(дефолт `fullstack`), `--install` (качать внешние скилы), `--answers <file>`.
 
 ## Фазы
 

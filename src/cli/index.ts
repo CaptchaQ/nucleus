@@ -33,6 +33,7 @@ import {
 import { assembleBundle, SKILL_SOURCES, type SkillBundle } from "../loader/runner.js";
 import { buildOrchestration, persistOrchestration } from "../orchestrator/runner.js";
 import { installSkill, harnessTargets, listedSkills } from "../install/runner.js";
+import { bootstrap } from "../bootstrap/runner.js";
 import type { ProjectProfile } from "../types.js";
 
 const ROOT = process.cwd();
@@ -73,6 +74,9 @@ Usage:
   nucleus init             Grill the user; persist .agent-forge/profile.json + ADR + CONTEXT.md
   nucleus init --questions Dump the question bank as JSON (agent protocol)
   nucleus init --answers <file.json>  Build the profile from answers, non-interactive
+  nucleus bootstrap [--answers <file.json>] [--domain <d>] [--install]
+                             One-command workspace setup: profile → map → skills
+                             → orchestration → AGENTS.md (agents read it at start)
   nucleus wayfind          Chart/resolve decision tickets on the wayfinder map
   nucleus wayfind --json   Chart/print the map as JSON, no interaction
   nucleus load [--install] Assemble the skill bundle (optionally install externals via npx skills)
@@ -267,6 +271,21 @@ async function cmdInstall(targets: string[]): Promise<void> {
   log("Then tell it: «создай проект через nucleus».");
 }
 
+async function cmdBootstrap(answersFile: string | undefined, domain: string, installExternals: boolean): Promise<void> {
+  const res = await bootstrap({
+    rootDir: ROOT,
+    answersFile,
+    domain,
+    installExternals,
+  });
+  log(`✓ Workspace bootstrapped for "${res.profile.name}" (${res.profile.domain})`);
+  log(`  ${res.refsCount} skill refs → .agent-forge/bundle.json`);
+  log(`  ${res.agentsCount} subagents → .agent-forge/orchestration.json`);
+  log(`  AGENTS.md written (agents read it at session start)`);
+  log(`\nStart your agent in this folder:`);
+  log(`  opencode / omp / claude-code   → then say: "создай проект через nucleus"`);
+}
+
 async function cmdCatalog(): Promise<void> {
   log("Catalog of skill sources (the 7 external resources + nucleus builtin):\n");
   for (const src of SKILL_SOURCES) {
@@ -325,6 +344,17 @@ switch (cmd) {
     const aIdx = rest.indexOf("--answers");
     if (qIdx >= 0 && aIdx >= 0) usage();
     await cmdInit(qIdx >= 0, aIdx >= 0 ? rest[aIdx + 1] : undefined);
+    break;
+  }
+  case "bootstrap": {
+    const aIdx = rest.indexOf("--answers");
+    const dIdx = rest.indexOf("--domain");
+    const domain = dIdx >= 0 && rest[dIdx + 1] ? rest[dIdx + 1]! : "fullstack";
+    await cmdBootstrap(
+      aIdx >= 0 && rest[aIdx + 1] ? rest[aIdx + 1] : undefined,
+      domain,
+      rest.includes("--install"),
+    );
     break;
   }
   case "wayfind": await cmdWayfind(rest.includes("--json")); break;

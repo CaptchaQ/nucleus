@@ -25,6 +25,13 @@ use its artifacts as the blueprint for building the project.
 nucleus init --questions
 ```
 
+> **Fast path:** if the user wants a quick start with defaults (no interview
+> yet) — e.g. they already ran `nucleus bootstrap` in the folder — skip to the
+> artifacts: `profile.json`, `wayfinder.json`, `bundle.json`,
+> `orchestration.json` and `AGENTS.md` are already on disk. Read them, then
+> jump to step 7. To redo the interview, run `nucleus init --answers answers.json`
+> with the fresh answers — it replaces the profile.
+
 Prints JSON: `[{id, layer, prompt, recommend?, dependsOn?, domains?, help?}]`.
 
 ### 2. Run the interview yourself

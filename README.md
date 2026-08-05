@@ -99,6 +99,7 @@ nucleus install          # register the skill into harnesses (or `--harness open
 
 ```bash
 nucleus init             # grill the user → .agent-forge/profile.json + ADR + CONTEXT.md
+nucleus bootstrap        # one command: profile → map → skills → orchestration → AGENTS.md
 nucleus wayfind          # build/resolve decision-ticket map
 nucleus load [--install] # assemble the skill bundle (opt. install externals via npx skills)
 nucleus orchestrate      # build the subagent DAG from the loaded bundle
@@ -118,6 +119,34 @@ nucleus load
 nucleus orchestrate
 nucleus improve README.md --tag v1 --goal "hero that makes a dev try the CLI"
 ```
+
+## One-command project workspace
+
+Create a folder for the new project, open PowerShell in it, and run:
+
+```powershell
+nucleus bootstrap
+```
+
+`bootstrap` sets up the agent workspace non-interactively:
+
+1. **Profile** — from `answers.json` if it sits next to it (`--answers <file>`),
+   or from sensible defaults (name = folder name, domain `fullstack`,
+   harness `opencode`); an existing `.agent-forge/profile.json` is **not
+   overwritten** (refine it with `nucleus init --answers`).
+2. **Decision map** — `.agent-forge/wayfinder.json`.
+3. **Skill bundle** — `.agent-forge/bundle.json` (`--install` also pulls the
+   external repos via `npx skills add`).
+4. **Orchestration** — subagent DAG in `.agent-forge/orchestration.json`.
+5. **`AGENTS.md`** — the project's "system prompt": omp / opencode /
+   claude-code / codex read it at session start and immediately know the
+   mission, domain, stack, roles, shared language and out-of-scope.
+
+Then start your agent **in the same folder** (`opencode`, `omp`,
+`claude-code`…) — startup instructions are already picked up from `AGENTS.md`.
+
+Options: `--domain web|ui|backend|fullstack|data|ml|cli|mobile|infra|content`
+(default `fullstack`), `--install` (fetch external skills), `--answers <file>`.
 
 ## Phases
 
