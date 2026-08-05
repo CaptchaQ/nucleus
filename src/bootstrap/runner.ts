@@ -15,7 +15,7 @@ import { basename, join } from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { buildProfile, persistProfile, type GrillAnswers } from "../grill/runner.js";
-import { emptyMap, chartInitialFrontier, saveMap } from "../wayfinder/runner.js";
+import { emptyMap, chartInitialFrontier, loadMap, saveMap } from "../wayfinder/runner.js";
 import { assembleBundle } from "../loader/runner.js";
 import { buildOrchestration, persistOrchestration } from "../orchestrator/runner.js";
 import type { ProjectProfile, Orchestration } from "../types.js";
@@ -139,7 +139,12 @@ export async function bootstrap(opts: {
   if (!existing || explicitAnswers) await persistProfile(opts.rootDir, profile);
 
   // Wayfinder map (chart the frontier; reuse an existing map).
-  await saveMap(opts.rootDir, emptyMap(profile));
+  const existingMap = await loadMap(opts.rootDir);
+  if (!existingMap) {
+    const map = emptyMap(profile);
+    map.tickets = chartInitialFrontier(profile);
+    await saveMap(opts.rootDir, map);
+  }
 
   // Skill bundle.
   const bundle = await assembleBundle(opts.rootDir, profile, {

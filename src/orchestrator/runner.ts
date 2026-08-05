@@ -70,8 +70,8 @@ function roleForSkill(id: string): AgentRole | null {
 
 /** Supplement: skills with no explicit mapping yet. */
 function defaultRoles(profile: ProjectProfile): AgentRole[] {
-  // Planner + implementer + reviewer are baseline for all projects.
-  const roles: AgentRole[] = ["planner", "implementer", "reviewer"];
+  // Planner + implementer + reviewer + docs are baseline for all projects.
+  const roles: AgentRole[] = ["planner", "implementer", "reviewer", "docs"];
   if (profile.domain === "web" || profile.domain === "ui") roles.push("designer");
   if (profile.domain === "ui") roles.push("tester");
   if (profile.domain === "backend" || profile.domain === "fullstack") roles.push("security");
@@ -95,6 +95,7 @@ export function buildOrchestration(
   // 2. Construct one agent per role, attaching skills it consults.
   const byRole: Map<AgentRole, SubagentSpec> = new Map();
   for (const role of roleSet) {
+    const existing = new Set<AgentRole>(roleSet);
     const skillRefs: SkillRef[] = bundle.refs.filter(
       (ref) => roleForSkill(ref.id) === role,
     );
@@ -103,7 +104,11 @@ export function buildOrchestration(
       role,
       label: LABEL_BY_ROLE[role],
       skillRefs,
-      downstream: DOWNSTREAM_BY_ROLE[role] ?? [],
+      // Drop downstream edges that point at roles not present in this DAG —
+      // a dynamic role set must never reference a missing peer.
+      downstream: (DOWNSTREAM_BY_ROLE[role] ?? []).filter((d) =>
+        existing.has(d as AgentRole),
+      ),
       owns: OWNS_BY_ROLE[role],
       model: modelHint(role, profile),
     });

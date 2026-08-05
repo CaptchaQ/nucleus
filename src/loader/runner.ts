@@ -17,6 +17,7 @@
 
 import { mkdir, readFile, readdir, writeFile, access } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import type {
   ProjectDomain,
@@ -210,7 +211,12 @@ export async function assembleBundle(
 ): Promise<SkillBundle> {
   const refs = profile.skillRefs.length ? profile.skillRefs : recommendSkills(profile);
   const overlayDir = join(rootDir, ".agent-forge", "skills");
-  const builtinDir = join(rootDir, "skills"); // nucleus ships its own skills
+  // Builtin skills ship with nucleus (skills/ next to dist/). Resolve to the
+  // package root — same trick as cli/index.ts REPO_ROOT — so it works in the
+  // repo, in a global install, and in $NucleusHome. Env override for tests.
+  const builtinDir =
+    process.env.NUCLEUS_SKILLS_DIR ??
+    join(fileURLToPath(new URL("../..", import.meta.url)), "skills");
   const [overlay, builtin] = await Promise.all([
     scanSkillDir(overlayDir, "overlay"),
     scanSkillDir(builtinDir, "builtin"),
