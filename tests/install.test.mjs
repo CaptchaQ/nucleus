@@ -8,13 +8,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { harnessTargets, installSkill, listedSkills } from "../dist/install/runner.js";
 
-test("harnessTargets covers claude-code, opencode, codex", () => {
+test("harnessTargets covers opencode, claude-code, codex, omp", () => {
   const targets = harnessTargets(join("home", "me"));
   assert.deepEqual(
     targets.map((t) => t.harness),
-    ["claude-code", "opencode", "codex"]
+    ["opencode", "claude-code", "codex", "omp"]
   );
-  assert.equal(targets[0].dir, join("home", "me", ".claude", "skills"));
+  assert.equal(targets[0].dir, join("home", "me", ".config", "opencode", "skills"));
+  assert.equal(targets[3].dir, join("home", "me", ".agents", "skills"));
 });
 
 test("installSkill copies nucleus-agent into requested harnesses (idempotent)", async () => {
@@ -27,7 +28,7 @@ test("installSkill copies nucleus-agent into requested harnesses (idempotent)", 
     await writeFile(join(skillDir, "SKILL.md"), "---\nname: nucleus-agent\n---\n");
 
     const first = await installSkill({ harnesses: ["claude-code", "opencode"], repoRoot, home });
-    assert.deepEqual(first.map((t) => t.harness), ["claude-code", "opencode"]);
+    assert.deepEqual(first.map((t) => t.harness), ["opencode", "claude-code"]);
 
     // Skill file landed where the harness looks.
     const copied = await readFile(join(home, ".claude", "skills", "nucleus-agent", "SKILL.md"), "utf8");

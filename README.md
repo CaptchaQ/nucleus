@@ -75,7 +75,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/CaptchaQ/nucleus/main/script
 
 The installer clones the repo to `~/.nucleus`, builds the core, puts `nucleus`
 on PATH, and **registers the `nucleus-agent` skill into agent harnesses**
-(`~/.claude/skills`, `~/.config/opencode/skill`, `~/.codex/skills`). After
+(`~/.agents/skills`, `~/.config/opencode/skills`, `~/.claude/skills`,
+`~/.codex/skills`). After
 restarting the agent session, just tell it:
 
 > "create a project through nucleus"

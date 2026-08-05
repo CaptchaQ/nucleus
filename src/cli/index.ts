@@ -79,7 +79,7 @@ Usage:
   nucleus orchestrate      Build the subagent DAG from the loaded skill bundle
   nucleus improve <file>   GAN-style improvement loop on <file> (Python bridge)
   nucleus skill add <name> Scaffold a custom skill under .agent-forge/skills/<name>/
-  nucleus install [--harness claude-code|opencode|codex|all]
+  nucleus install [--harness opencode|claude-code|codex|omp|all]
                              Register the nucleus-agent skill into agent harnesses
   nucleus catalog          Print the catalog of skills across all 7 sources
   nucleus doctor           Sanity-check environment and required paths

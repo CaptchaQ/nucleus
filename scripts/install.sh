@@ -13,7 +13,8 @@
 #   4. Puts a `nucleus` shim on PATH (into a writable, already-on-PATH bin dir,
 #      else prints the export line for your shell).
 #   5. Registers the nucleus-agent skill into known agent harnesses
-#      (~/.claude/skills, ~/.config/opencode/skill, ~/.codex/skills).
+#      (~/.agents/skills, ~/.config/opencode/skills, ~/.claude/skills,
+#      ~/.codex/skills).
 set -euo pipefail
 
 REPO="https://github.com/CaptchaQ/nucleus.git"
@@ -65,8 +66,8 @@ else
   echo "      export PATH=\"$SHIM_DIR:\$PATH\""
 fi
 
-# Register the nuclei agent skill into known harnesses.
-for h in "$HOME/.claude/skills" "$HOME/.config/opencode/skill" "$HOME/.codex/skills"; do
+# Register the nucleus-agent skill into known harnesses.
+for h in "$HOME/.agents/skills" "$HOME/.config/opencode/skills" "$HOME/.claude/skills" "$HOME/.codex/skills"; do
   mkdir -p "$h"
   cp -R "$NUCLEUS_HOME/skills/nucleus-agent" "$h/"
   echo "==> registered nucleus-agent skill → $h"

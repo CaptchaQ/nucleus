@@ -73,7 +73,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/CaptchaQ/nucleus/main/script
 
 Установщик: клонирует репозиторий в `~/.nucleus`, собирает ядро, кладёт
 команду `nucleus` на PATH и **регистрирует скилл `nucleus-agent` в агентские
-харнессы** (`~/.claude/skills`, `~/.config/opencode/skill`, `~/.codex/skills`).
+харнессы** (`~/.agents/skills`, `~/.config/opencode/skills`, `~/.claude/skills`,
+`~/.codex/skills`).
 После перезапуска сессии агента достаточно сказать ему:
 
 > «создай проект через nucleus»

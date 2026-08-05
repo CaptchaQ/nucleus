@@ -11,28 +11,29 @@
 #   3. npm ci + npm run build -> dist\cli\index.js.
 #   4. Creates a `nucleus.cmd` shim and adds it to the *user* PATH.
 #   5. Registers the nucleus-agent skill into known agent harnesses
-#      (~\.claude\skills, ~\.config\opencode\skill, ~\.codex\skills).
+#      (~\.agents\skills, ~\.config\opencode\skills, ~\.claude\skills,
+#      ~\.codex\skills).
 $ErrorActionPreference = "Stop"
 
 $Repo   = "https://github.com/CaptchaQ/nucleus.git"
 $Branch = if ($env:NUCLEUS_BRANCH) { $env:NUCLEUS_BRANCH } else { "main" }
-$Home   = if ($env:NUCLEUS_HOME) { $env:NUCLEUS_HOME } else { Join-Path $env:USERPROFILE ".nucleus" }
+$NucleusHome = if ($env:NUCLEUS_HOME) { $env:NUCLEUS_HOME } else { Join-Path $env:USERPROFILE ".nucleus" }
 
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
   Write-Error "Node.js >= 18 is required (not found). https://nodejs.org"
   exit 1
 }
 
-Write-Host "nucleus -> installing to $Home"
+Write-Host "nucleus -> installing to $NucleusHome"
 
-if (-not (Test-Path (Join-Path $Home "package.json"))) {
-  New-Item -ItemType Directory -Force -Path (Split-Path $Home) | Out-Null
-  git clone --depth 1 --branch $Branch $Repo $Home
+if (-not (Test-Path (Join-Path $NucleusHome "package.json"))) {
+  New-Item -ItemType Directory -Force -Path (Split-Path $NucleusHome) | Out-Null
+  git clone --depth 1 --branch $Branch $Repo $NucleusHome
 } else {
-  Write-Host "==> repo present, reusing $Home"
+  Write-Host "==> repo present, reusing $NucleusHome"
 }
 
-Push-Location $Home
+Push-Location $NucleusHome
 try {
   npm ci --no-audit --no-fund | Out-Null
   npm run build | Out-Null
@@ -41,7 +42,7 @@ try {
 }
 
 # Shims so `nucleus` works from anywhere.
-$ShimDir = Join-Path $Home "bin"
+$ShimDir = Join-Path $NucleusHome "bin"
 New-Item -ItemType Directory -Force -Path $ShimDir | Out-Null
 $Shim = Join-Path $ShimDir "nucleus.cmd"
 @"
@@ -52,7 +53,7 @@ node "%~dp0..\dist\cli\index.js" %*
 # Add to the *user* PATH (persists; avoids needing admin for machine PATH).
 $UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
 if (-not $UserPath -or $UserPath -notmatch [regex]::Escape($ShimDir)) {
-  $NewPath = ($UserPath.TrimEnd(';') + ";" + $ShimDir).TrimStart(";")
+  $NewPath = if ($UserPath) { ($UserPath.TrimEnd(";") + ";" + $ShimDir) } else { $ShimDir }
   [Environment]::SetEnvironmentVariable("Path", $NewPath, "User")
   Write-Host "==> added $ShimDir to user PATH (open a NEW terminal)"
 } else {
@@ -60,10 +61,11 @@ if (-not $UserPath -or $UserPath -notmatch [regex]::Escape($ShimDir)) {
 }
 
 # Register the nucleus-agent skill into known harnesses.
-$SkillSrc = Join-Path $Home "skills\nucleus-agent"
+$SkillSrc = Join-Path $NucleusHome "skills\nucleus-agent"
 foreach ($h in @(
+  (Join-Path $env:USERPROFILE ".agents\skills"),
+  (Join-Path $env:USERPROFILE ".config\opencode\skills"),
   (Join-Path $env:USERPROFILE ".claude\skills"),
-  (Join-Path $env:USERPROFILE ".config\opencode\skill"),
   (Join-Path $env:USERPROFILE ".codex\skills")
 )) {
   New-Item -ItemType Directory -Force -Path $h | Out-Null

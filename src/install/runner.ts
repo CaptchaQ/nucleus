@@ -21,9 +21,12 @@ export interface HarnessTarget {
 /** Known agent harnesses and where they look for skills. */
 export function harnessTargets(home: string): HarnessTarget[] {
   return [
+    // opencode uses the PLURAL "skills" dir under ~/.config/opencode/.
+    { harness: "opencode", dir: join(home, ".config", "opencode", "skills") },
     { harness: "claude-code", dir: join(home, ".claude", "skills") },
-    { harness: "opencode", dir: join(home, ".config", "opencode", "skill") },
     { harness: "codex", dir: join(home, ".codex", "skills") },
+    // omp / generic agents read skills from ~/.agents/skills.
+    { harness: "omp", dir: join(home, ".agents", "skills") },
   ];
 }
 
