@@ -1,118 +1,142 @@
 # AGENTS.md — инструкция для агентов, работающих с nucleus
 
-Прочитай целиком перед началом любой работы. Это системный промпт: он
-определяет **как ты работаешь**, через набор скилов в `skills/`.
+Прочитай целиком перед началом любой работы. nucleus — **тонкий оркестратор**:
+он не имеет собственных скилов, только маршрутизирует агентский цикл
+`idea → ship` по **реальным внешним скилам**, вендоренным в `skills/<vendor>/`.
+Все скилы — боевые upstream-файлы (mattpocock/skills · affaan-m/ECC ·
+crimeacs/auto-improve · emilkowalski/skills · google-labs-code/stitch-skills),
+скопированные дословно с атрибуцией в каждом `skills/<vendor>/ATTRIBUTION.md`.
 
 ---
 
-## 1. Твоя роль
+## 0. Что значит «тонкий оркестратор»
 
-Ты — агент-архитектор. Не пишешь код «по запросу»: сначала **заточишь, что
-строить**, через интервью, фиксируешь профиль и decisión-дерево, потом
-строишь через скилы. Маленькие, композируемые, работают с любой моделью —
-как у Матта Покока.
+nucleus не переделывает чужие скилы. Когда человек говорит «хочу создать X»,
+ты запускаешь **настоящие** upstream-скилы (имена `/grilling`, `/wayfinder`,
+`/tdd`, `/code-review`… — как в их frontmatter). nucleus только: (1) ставит
+их в харнесс одним `install.sh`, (2) задаёт общий цикл `idea → ship`, (3)
+соединяет фазы. Любой скил вызывай по его настоящему имени и читай его
+оригинальный SKILL.md, не подменяй.
 
-## 2. Главная циклё — idea → ship
+## 1. Главная цикло — idea → ship
 
 ```
-setup → grilling → (wayfinder|spec) → to-tickets → implement → review → ship
-                                              ↘ stitch (подгрузить библиотеку)
-                                              ↘ improve (цикл доработки)
+[setup-matt-pocock-skills] → /grilling → /domain-modeling
+                                       ↘ /wayfinder (если большой/туманный)
+                          → /to-spec → /to-tickets → /implement (→ /tdd внутри)
+                                                            ↘ /code-review (two axes) → ship
+                                                            ↘ /auto-improve (GAN polish)
+                                                            ↘ orchestrate: /research, /prototype, /handoff, /audit-then-plan
 ```
 
-1. **`/setup`** — один раз на проект: tracker, метки, место доков, чек ядра.
-2. **`/grilling`** — интервью дизайн-деревом с фронтиром. Заполняет
-   `profile.json`, `CONTEXT.md`, ADR. **Обязательно** перед любым 코드.
-3. **`/stitch`** — подгрузить под домен/стек библиотечные скилы
-   (`skills/library/`) → `.agent-forge/skills.json`.
-4. **`/wayfinder`** если проект большой/туманный — карта decision-тикетов.
-5. **`/spec`** — свернуть разговор в построимую спецификацию на трекере.
-6. → **`/implement`** по спецификации (в одном окне; per-ticket с `/clear`
-   между ними). Внутри `implement` гонит **`/tdd`** (из библиотеки), замыкает
-   **`/review`** (две оси: Standards+Spec).
-7. **`/improve`** — цикл доработки по GAN-механике (судья≠мутатор, pairwise,
-   три стопора).
-8. Крупное → **`/orchestrate`** — роли (planner/implementer/reviewer/…)
-   и параллельные субагенты.
+| Фаза | Скил (vendored) | Где лежит (skills/<vendor>/) |
+|------|-----------------|------------------------------|
+| Setup | `setup-matt-pocock-skills` | mattpocock (tracker/labels/docs) |
+| Интервью | `grilling` (`grill-me`, `grill-with-docs`) | mattpocock |
+| Глоссарий/ADR | `domain-modeling` | mattpocock |
+| Карта (большой) | `wayfinder` | mattpocock |
+| Спека | `to-spec` | mattpocock |
+| Тикеты | `to-tickets` | mattpocock |
+| Реализация | `implement` (гонит `tdd`) | mattpocock |
+| TDD | `tdd` | mattpocock (библиотека code) |
+| Ревью | `code-review` (2 subagent) | mattpocock |
+| Улучшение код-базы | `improve-codebase-architecture` | mattpocock |
+| Авто-улучшение (GAN) | `auto-improve` (improve.py) | crimeacs/auto-improve |
+| API дизайн | `api-design` | affaan-m/ECC |
+| UX/motion review | `review-animations`, `improve-animations` | emilkowalski |
+| Прототип | `prototype` | mattpocock (или emilkowalski/prototype) |
+| Дебаг | `diagnosing-bugs` | mattpocock |
+| Разведка | `research` (subagent) | mattpocock |
+| Phase boundaries | `ask-matt` (роутер mattpocock), `handoff` | mattpocock |
 
-## 3. Скилы — где что лежит
+## 2. Run-through для «хочу создать X»
 
-**Ядро** — `skills/<name>/SKILL.md`, активны всегда:
+1. Если нет `.agents/` конфига репозитория — один раз `/setup-matt-pocock-skills`
+   (issue-tracker, triage labels, место доков). Это upstream setup-скил MC.
+2. **`/grilling`** (mattpocock) — дизайновское дерево интервью: раунды с
+   фронтиром, рекомендованные ответы, факты ищет агент (сабагент-`/research`),
+   решения — человек. البس с парами ``/domain-modeling`` чтобы писать
+   `CONTEXT.md` (упиквитous language) и ADR в момент.
+3. Если проект **больше одной сессии/туманно** → `/wayfinder` (карта
+   decision-тикетов, frontier, HITL/AFK). Если влезает в сессию — доходи.
+4. **`/to-spec`** — свернуть разговор в построимую спецификацию на трекере.
+5. **`/to-tickets`** — распилить на tracer-bullet тикеты с блокирование
+   рёбрами.
+6. **`/implement`** по каждому тикету (с `/clear` между ними); внутри
+   гонит **`/tdd`** (red→green, seams, vertical slices), замыкает
+   **`/code-review`** (две параллельных оси: Standards+Spec, fresh subagents).
+7. Полировка / повторяющийся запах → `/auto-improve` (crimeacs, GAN: мутатор ≠
+   судья, pairwise-gate, три стопора от зацикливания) или
+   `/improve-codebase-architecture` (mattpocock, survey→grilling loop).
+8. UX/animation правки → `review-animations` + `improve-animations`
+   (emilkowalski): frequency-gate, таблицы Before/After/Why, Block/Approve.
+9. API/контракт → `api-design` (ECC): deep modules, ubiquitous language,
+   canonical errors.
 
-| Скил | Когда применять |
-|------|-----------------|
-| `skills/setup/SKILL.md` | Первичная настройка проекта (tracker/labels/docs) |
-| `skills/grilling/SKILL.md` | Интервью дизайн-деревом перед стартом; заполняет profile.json/CONTEXT.md/ADR |
-| `skills/stitch/SKILL.md` | После grilling — подгрузить библиотечные скилы под домен/стек |
-| `skills/wayfinder/SKILL.md` | Большой/туманный проект — карта decision-тикетов |
-| `skills/spec/SKILL.md` | После grilling/wayfinder — спецификация из разговора |
-| `skills/orchestrate/SKILL.md` | Этап большой — распределить по ролям и параллельным субагентам |
-| `skills/review/SKILL.md` | Code-review диффа двумя осями (Standards+Spec) свежими субагентами |
-| `skills/improve/SKILL.md` | Доработка GAN-циклом (мутатор/судья/pairwise/чекпойнт) |
-| `skills/domain/SKILL.md` | Активно строить CONTEXT.md (глоссарий) и ADR (hard-to-reverse) |
-| `skills/skill-add/SKILL.md` | Создать новый скил в skills/ или skills/library/ по шаблону |
-
-**Библиотека** — `skills/library/<name>/SKILL.md`, подключается под проект
-через `stitch`:
-
-| Скил | Когда применять (кратко; full текст в SKILL.md) |
-|------|-----------------|
-| `skills/library/tdd/SKILL.md` | red→green loop, seams, vertical slices, anti-паттерны |
-| `skills/library/debug/SKILL.md` | Сопротивляющиеся баги — tight red loop, gated фазы, regression-тест |
-| `skills/library/ux-review/SKILL.md` | UI/UX правки — frequency-gate, таблицы Before/After/Why, Block/Approve |
-| `skills/library/api-design/SKILL.md` | Проектирование API/контракта — deep modules, ubiquitous language, canonical errors |
-| `skills/library/prototype/SKILL.md` | Дизайн-вопрос требует runnable ответа — throwaway, N вариантов для UI |
-
-> Чтобы добавить новый скил → `skill-add`. Чтобы расширить под проект →
-> `stitch`. Поиск по `when:` — это способ харнесса активировать библиотечный
-> скил в рантайме.
-
-## 4. Обязательно перед стартом
+## 3. Обязательно перед стартом
 
 - Прочитай AGENTS.md целиком (этот файл).
-- `setup` если нет `.agent-forge/setup.json`.
-- **`grilling` пока нет `.agent-forge/profile.json`.** Никакого кода до
-  профиля. Исключение — человек явно сказал «не спрашивай, делай» или правка
-  по уже зафиксированному профилю мелкого масштаба.
+- `/setup-matt-pocock-skills` если нет конфига трекера.
+- **`/grilling` пока нет `CONTEXT.md`/профиля.** Никакого кода до интервью.
+  Исключение — человек явно «не спрашивай, делай» или мелкая правка.
 
-## 5. Рабочие правила
+## 4. Рабочие правила
 
-1. **Профиль — контракт.** Код не противоречит `profile.json`; противоречие
-   → диалог, не молчаливое отклонение.
-2. **Один скил — одна фаза.** Не смешивай фазы: grilling/spec/implement/review
-   последовательно, не в одном проходе.
-3. **Facts — твоя работа, решения — человека.** (grilling правило 1)
-4. **Маленькие подтверждения перед крупным шагом** (новый этап, смена стека,
-   удаление кода) — одно предложение что и почему.
-5. **Artefacts проекта** живут в `.agent-forge/`: profile.json, setup.json,
-   skills.json, improvements.md, plans/, prototypes/.
-6. **Не выдумывай.** Чего нет в профиле/spec/CONTEXT — уточни, не додумывай.
-   Нет значения в каталоге — спроси (no invented values).
-7. **Default to flagging** в review (одобрение заработано, не по умолчанию).
-8. **Свежий взгляд** — review/audit в отдельном окне/субагенте, не в окне
-   implementer.
+1. **Вызывай скил по его настоящему `/name`** из frontmatter. Не коняй его
+   собственной версией — в nucleus их нет.
+2. **Оригинал SKILL.md — источник правды.** Перед тем как применить — прочитай
+   `skills/<vendor>/<name>/SKILL.md` дословно.
+3. **Профиль/CONTEXT — контракт.** Код не противоречит `CONTEXT.md`
+   (ubiquitous language) и `setup-matt-pocock-skills` конфигу.
+4. **Facts — агент, решения — человека.** (правило `/grilling`)
+5. **Свежий взгляд:** `/code-review` и любая ревизия — в отдельном
+   субагенте, не в окне реализатора.
+6. **No invented values** (emilkowalski): значения тяги из каталога upstream
+   скила, не выдумывай.
+7. **Phase boundaries** — см. `ask-matt` (mattpocock роутер): continue /
+   subagent / compact / clear / handoff. Continue проверь и отвергни первым.
+8. **Не выдумывай.** Чего нет в профиле/spec/CONTEXT — уточни, не додумывай.
 
-## 6. Контекст-гигиена (phase boundaries)
+## 5. Где что лежит / атрибуция
 
-Держи grilling→spec→to-tickets в **одном неразрывном окне**, не compact
-до after to-tickets. Каждый `/implement` стартует свежим, из тикета. На
-границе фазы выбери: continue / subagent / compact / clear / handoff
-(continue проверь и отвергни первым).
+```
+skills/
+├── mattpocock/<name>/SKILL.md  ← интервью, wayfinder, to-spec, tdd, code-review, ...
+├── auto-improve/SKILL.md+improve.py+criteria/  ← GAN auto-improve (crimeacs)
+├── ecc/<name>/SKILL.md         ← api-design и др. (affaan-m/ECC)
+├── emilkowalski/<name>/SKILL.md ← review-animations, improve-animations, animate, ...
+├── stitch-skills/              ← google-labs-code/stitch-skills ( смотри NOTE.md внутри)
+```
+Каждый `skills/<vendor>/ATTRIBUTION.md` — upstream URL + commit SHA + дата
+клонирования. Каждый `skills/<vendor>/LICENSE` — копия upstream-лицензии.
+ Все скилы в их оригинальном виде; nucleus не редактировал их содержимое.
 
-## 7. Формат ответов
+## 6. Источники механик
+
+Цикл idea→ship, grilling, wayfinder, domain-modeling, to-spec, to-tickets,
+implement, tdd, code-review, diagnosing-bugs, research, prototype, handoff,
+setup — [mattpocock/skills](https://github.com/mattpocock/skills).
+GAN-цикл авто-улучшения (судья≠мутатор, pairwise, anti-slop) —
+[crimeacs/auto-improve](https://github.com/crimeacs/auto-improve).
+API/контракт-дизайн, deep modules — [affaan-m/ECC](https://github.com/affaan-m/ECC).
+UX/motion review, frequency-gate, strict output, audit-then-plan —
+[emilkowalski/skills](https://github.com/emilkowalski/skills).
+Композиция «baton» — [google-labs-code/stitch-skills](https://github.com/google-labs-code/stitch-skills).
+UX-эвристики — [keepsimple.io/ru/uxcore](https://keepsimple.io/ru/uxcore).
+Библиотека промптов/параметризация — [f/prompts.chat](https://github.com/f/prompts.chat).
+
+## 7. Установка в проект
+
+```bash
+bash install.sh --harness opencode,claude-code,codex,omp
+# или Windows
+.\\install.ps1 -Harness opencode,claude-code,codex,omp
+```
+Копирует все vendored скилы в каталоги скилов харнессов и кладёт этот
+AGENTS.md в текущую папку. См. `install.sh --help`.
+
+## 8. Формат ответов
 
 - Начни с **вывода**: «Делаю X, потому что Y».
-- В работе ссылайся на скилы (`/grilling`, `/review`…).
-- После фазы — краткий итог: что сделано, что осталось, следующий шаг
-  (обычно — следующий пункт цикла idea→ship).
-
-## 8. Источники механик
-
-grilling/wayfinder/domain-modeling/to-spec/tdd/code-review — Matt Pocock
-(github.com/mattpocock/skills). Подгрузка скилов под проект — ECC
-(github.com/affaan-m/ECC). Frequency-gate, strict output, audit-then-plan —
-Emil Kowalski (github.com/emilkowalski/skills). GAN-цикл улучшения (судья≠
-мутатор, pairwise, anti-slop) — auto-improve (github.com/crimeacs/auto-improve).
-Параметризация промптов и автоактивация по описанию — prompts.chat
-(github.com/f/prompts.chat). UX-эвристики — keepsimple.io/ru/uxcore.
-Композиция скилов «baton» — stitch-skills (google-labs-code).
+- Ссылайся на скилы по настоящему имени (`/grilling`, `/code-review`…).
+- После фазы — краткий итог: что сделано, что осталось, следующий шаг.

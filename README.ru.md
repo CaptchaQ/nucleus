@@ -1,81 +1,62 @@
 <p align="center">
-  <img src="assets/nucleus-banner.svg" alt="nucleus — skills for AI coding agents" width="780">
+  <img src="assets/nucleus-banner.svg" alt="nucleus — thin orchestrator for AI coding agents" width="780">
 </p>
 
-# nucleus — навыки для AI-кодинг-агентов
+# nucleus — тонкий оркестратор для AI-кодинг-агентов
 
-Nucleus — это **набор SKILL.md** (плюс системный промпт `AGENTS.md`) для
-AI-кодинг-агентов: opencode, claude-code, codex, omp. Когда вы говорите
-«хочу создать X», агент **сначала интервьюирует вас** (дизайн-дерево с
-фронтиром), **фиксирует профиль**, затем **подгружает проектные навыки**
-под стек/домен и **оркеструет субагентов** для автономной работы.
+nucleus **не имеет собственных скилов**. Он вендорит **боевые** скилы из
+реальных upstream-репозиториев и маршрутизирует агентский цикл
+`idea → ship` по ним дословно. Запускаете агента в папке проекта и говорите
+«хочу создать X» — он гонит вас через настоящий `/grilling`, `/wayfinder`,
+`/to-spec`, `/implement`→`/tdd`→`/code-review`, `/auto-improve` — то, что
+люди реально используют в активе, а не наш рерайт.
 
-Никакого CLI, npm-пакетов, сборки — это просто файлы с инструкциями.
+Все скилы — **копии upstream SKILL.md дословно** (плюс `LICENSE` и
+`ATTRIBUTION.md` с commit SHA каждого источника). nucleus не правит их
+содержимое.
 
-## Идея → поставка
+## Идея → поставка (идея→ship)
 
 ```
-setup → grilling → stitch → (wayfinder|spec) → implement → review → ship
-                                                       ↘ improve (цикл)
-                                                       ↘ orchestrate (субагенты)
+[setup-matt-pocock-skills] → /grilling (+/domain-modeling)
+                            → /wayfinder (если большой/туманный)
+                            → /to-spec → /to-tickets → /implement
+                            (внутри: /tdd, замыкает: /code-review — 2 subagent)
+                            ↘ /auto-improve (GAN polish)
+                            ↘ /review-animations, /improve-animations (UX/motion)
+                            ↘ /api-design (ECC)
 ```
 
-1. **`/setup`** — один раз: issue-tracker, метки, место доков.
-2. **`/grilling`** — беспощадное интервью дизайн-деревом (раунды, фронтир,
-   рекомендованные ответы). Факты ищет агент, решения — человек. Результат:
-   `.agent-forge/profile.json`, `CONTEXT.md`, ADR.
-3. **`/stitch`** — подгрузить под домен/стек навыки из `skills/library/`.
-4. **`/wayfinder`** — если большой/туманный проект: карта decision-тикетов.
-5. **`/spec`** — свернуть разговор в спецификацию на трекере.
-6. **`/implement`** (через `/tdd` из библиотеки), замыкает **`/review`**
-   (две оси: Standards+Spec, параллельными субагентами).
-7. **`/improve`** — GAN-цикл доработки (судья ≠ мутатор, pairwise-gate, три
-   стопора от зацикливания).
-8. **`/orchestrate`** — для крупного: роли (planner/implementer/reviewer/…)
-   и параллельные субагенты, self-contained планы.
+## Вендоры (skills/<vendor>/)
 
-## Навыки ядра (`skills/<name>/SKILL.md`)
+| Vendor | Скилов | Что это | Источник |
+|--------|--------|---------|----------|
+| `mattpocock` | 25 | интервью grilling, wayfinder, to-spec/to-tickets, implement, tdd, code-review, domain-modeling, ask-matt (роутер), setup, prototype, research, handoff, … | [mattpocock/skills](https://github.com/mattpocock/skills) |
+| `auto-improve` | 1 | GAN-цикл авто-улучшения: мутатор ≠ судья, pairwise-gate, три стопора от зацикливания, `improve.py` + `criteria/` | [crimeacs/auto-improve](https://github.com/crimeacs/auto-improve) |
+| `emilkowalski` | 9 | UX/motion review (`review-animations`, `improve-animations`), animate, prototype, pick-ui-library, design-eng | [emilkowalski/skills](https://github.com/emilkowalski/skills) |
+| `ecc` | 3 | `api-design`, `security-review`, `tdd-workflow` | [affaan-m/ECC](https://github.com/affaan-m/ECC) |
+| `stitch-skills` | 15 | дизайн-скилы Google Stitch + `stitch-loop` (baton-композиция), `generate-design`, `manage-design-system`, `react-*`, `shadcn-ui`, `remotion` | [google-labs-code/stitch-skills](https://github.com/google-labs-code/stitch-skills) |
 
-| Навык | Когда применять |
-|------|-----------------|
-| `skills/setup/SKILL.md` | Первичная настройка проекта (tracker/labels/docs) |
-| `skills/grilling/SKILL.md` | Интервью дизайн-деревом перед стартом; заполняет profile.json/CONTEXT.md/ADR |
-| `skills/stitch/SKILL.md` | После grilling — подгрузить библиотечные навыки под домен/стек |
-| `skills/wayfinder/SKILL.md` | Большой/туманный проект — карта decision-тикетов |
-| `skills/spec/SKILL.md` | После grilling/wayfinder — спецификация из разговора |
-| `skills/orchestrate/SKILL.md` | Этап большой — распределить по ролям и субагентам |
-| `skills/review/SKILL.md` | Code-review диффа двумя осями свежими субагентами |
-| `skills/improve/SKILL.md` | Доработка GAN-циклом (мутатор/судья/pairwise/чекпойнт) |
-| `skills/domain/SKILL.md` | Активно строить CONTEXT.md (глоссарий) и ADR |
-| `skills/skill-add/SKILL.md` | Создать новый навык в skills/ или skills/library/ |
-
-## Библиотека под проект (`skills/library/<name>/SKILL.md`)
-
-| Навык | Когда применять |
-|------|-----------------|
-| `skills/library/tdd/SKILL.md` | red→green loop, seams, vertical slices |
-| `skills/library/debug/SKILL.md` | Сопротивляющиеся баги — tight red loop, gated фазы |
-| `skills/library/ux-review/SKILL.md` | UI/UX правки — frequency-gate, Before/After/Why, Block/Approve |
-| `skills/library/api-design/SKILL.md` | Проектирование API/контракта — deep modules, canonical errors |
-| `skills/library/prototype/SKILL.md` | Дизайн-вопрос требует runnable ответа — throwaway, N вариантов |
-
-Новый навык → `skill-add`. Подгрузить под проект → `stitch`.
+**Итого 53 реальных скила.** Каждый `skills/<vendor>/ATTRIBUTION.md` — upstream
+URL + commit SHA + дата клонирования. Каждый `skills/<vendor>/LICENSE` — копия
+upstream лицензии.
 
 ## Быстрый старт
 
 ```bash
-# POSIX — все харнессы, вся библиотека
+# Все харнессы, все вендоры
 bash <(curl -fsSL https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.sh)
 
-# Только часть библиотеки под стек
-bash install.sh --harness opencode --with tdd,debug,prototype
+# Только нужные харнессы и вендоры под стек
+bash install.sh --harness opencode --vendors mattpocock,auto-improve,ecc
 
 # Windows PowerShell
 irm https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.ps1 | iex
 ```
 
-Скрипт копирует **ядро** (всегда) + выбранную часть **библиотеки**
-(`--with`) в каталоги скилов харнесса и кладёт `AGENTS.md` в текущую папку.
+`install.sh` копирует vendored скилы в каталоги скилов харнесса (core —
+`skills/<vendor>/<skill>/`) и кладёт `AGENTS.md` (тонкий роутер) в текущую
+папку.
 
 | Харнесс | Каталог |
 |---------|---------|
@@ -84,21 +65,23 @@ irm https://raw.githubusercontent.com/CaptchaQ/nucleus/main/install.ps1 | iex
 | codex | `~/.codex/skills/` |
 | omp | `~/.agents/skills/` |
 
-Запустите агент в папке проекта и скажите: «создай проект, сначала интервью».
+Запускаете агента и говорите: «хочу создать …, сначала интервью `/grilling`».
 
-## Артефакты проекта (`.agent-forge/`)
+## Как работать (для агента)
 
-| Файл | Что это |
-|------|---------|
-| `setup.json` | Конфиг проекта: harness, tracker, метки, пути доков |
-| `profile.json` | Контракт из интервью: destination, domain, stack, outOfScope, glossary |
-| `skills.json` | Manifest: активные библиотечные навыки + reason |
-| `improvements.md` | Лог improve-циклов и post-mortem debug-ов |
-| `plans/` | Self-contained планы из orchestrate |
+Полная инструкция — в [`AGENTS.md`](AGENTS.md). Суть: вызывайте скилы по их
+**настоящему** upstream-имени (`/grilling`, `/wayfinder`, `/tdd`…), читайте
+оригинальный `skills/<vendor>/<name>/SKILL.md` перед применением. nucleus
+только задаёт общий цикл `idea → ship` и склеивает фазы. setup → grilling →
+(domain-modeling, CONTEXT.md/ADR) → wayfinder|to-spec → to-tickets →
+implement(tdd) → code-review → ship, плюс auto-improve для полировки,
+review-animations для UX, api-design для контрактов.
 
-## Источники механик
+## Атрибуция
 
-grilling/wayfinder/domain/to-spec/tdd/review — [mattpocock/skills](https://github.com/mattpocock/skills) · подгрузка под проект — [affaan-m/ECC](https://github.com/affaan-m/ECC) · frequency-gate, strict output, audit-then-plan — [emilkowalski/skills](https://github.com/emilkowalski/skills) · GAN-цикл улучшения — [crimeacs/auto-improve](https://github.com/crimeacs/auto-improve) · параметризация промптов и автоактивация — [f/prompts.chat](https://github.com/f/prompts.chat) · UX-эвристики — [keepsimple.io/ru/uxcore](https://keepsimple.io/ru/uxcore) · композиция «baton» — [google-labs-code/stitch-skills](https://github.com/google-labs-code/stitch-skills).
+nucleus распределяет эти наборы скилов **как есть**, сохраняя upstream
+лицензии (MIT / Apache-2.0). См. `skills/<vendor>/ATTRIBUTION.md` для
+конкретного commit SHA каждого источника. Сам nucleus MIT.
 
 ## Лицензия
 
